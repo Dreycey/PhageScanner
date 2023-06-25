@@ -3,7 +3,7 @@ name: phagescanner-cdci-actions
 on:
     pull_request:
         branches:
-            - main
+            - master
 
 jobs:
     mac-testing:
