@@ -57,26 +57,3 @@ jobs:
             - name: Test with tox
               shell: bash -l {0}
               run: tox
-
-    windows-testing:
-        runs-on: windows-latest
-        steps:
-            - uses: actions/checkout@v2
-            - uses: conda-incubator/setup-miniconda@v2
-              with:
-                  environment-file: environment.yml
-                  activate-environment: phagescanner
-                  auto-activate-base: false
-            - name: Cache Conda environment # caching should save time!
-              uses: actions/cache@v2
-              with:
-                  path: C:/Users/runneradmin/miniconda/envs/$ENV_NAME
-                  key: ${{ runner.os }}-conda-${{ hashFiles('environment.yml') }}
-            - name: conda env check
-              shell: pwsh
-              run: |
-                  ls c:\miniconda\envs\;
-                  conda info --envs;
-            - name: run unit tests
-              shell: pwsh
-              run: python3 -m unittest discover -s PhageScanner/tests -p 'test_*.py'
