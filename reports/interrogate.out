@@ -1,0 +1,25 @@
+====== Coverage for /Users/dreyceyalbin/Desktop/PhageScanner/git_change/PhageScanner/PhageScanner/ ======
+------------------------------------------------ Summary ------------------------------------------------
+| Name                                      |        Total |        Miss |        Cover |        Cover% |
+|-------------------------------------------|--------------|-------------|--------------|---------------|
+| main/DNA.py                               |            6 |           0 |            6 |          100% |
+| main/__init__.py                          |            1 |           1 |            0 |            0% |
+| main/assembler_wrappers.py                |            8 |           0 |            8 |          100% |
+| main/clustering_wrappers.py               |           10 |           0 |           10 |          100% |
+| main/database_adapters.py                 |           18 |           0 |           18 |          100% |
+| main/design_patterns.py                   |            3 |           0 |            3 |          100% |
+| main/exceptions.py                        |            7 |           0 |            7 |          100% |
+| main/feature_extractors.py                |           33 |           0 |           33 |          100% |
+| main/models.py                            |           31 |           0 |           31 |          100% |
+| main/orffinder_wrappers.py                |            9 |           0 |            9 |          100% |
+| main/pipelines.py                         |           30 |           0 |           30 |          100% |
+| main/utils.py                             |           37 |           0 |           37 |          100% |
+| tests/__init__.py                         |            1 |           0 |            1 |          100% |
+| tests/test_DNA.py                         |            3 |           0 |            3 |          100% |
+| tests/test_clustering_wrappers.py         |            4 |           0 |            4 |          100% |
+| tests/test_database_adapters.py           |            6 |           0 |            6 |          100% |
+| tests/test_feature_extractors.py          |           19 |           0 |           19 |          100% |
+| tests/test_utils.py                       |           25 |           0 |           25 |          100% |
+|-------------------------------------------|--------------|-------------|--------------|---------------|
+| TOTAL                                     |          251 |           1 |          250 |         99.6% |
+----------------------------- RESULT: PASSED (minimum: 5.0%, actual: 99.6%) -----------------------------
