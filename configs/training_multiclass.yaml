@@ -1,4 +1,13 @@
 models:
+  - name: "BLAST"
+    model_info:
+      model_name: "BLAST"
+      is_sequential: false
+    sequential: false
+    class_balancing: false # Options: "downsample"
+    feature_selection: false # Options:
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "PROTEINSEQ"
   - name: "Ru et al. (Random Forest)"
     model_info:
       model_name: "RANDOMFOREST"
@@ -60,22 +69,6 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 0
-      # - name: "DPC"
-      #   parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-      #     gap_size: 2
-      # - name: "ATC"
-      # - name: "ISO"
-      # - name: "PSEUDOAAC"
-      # - name: "CTD"
-  # - name: "PhAnns (FFNN)"
-  #   model_name: "FFNN"
-  #    - is_sequential: false
-  #   class_balancing: false # Options: "downsample"
-  #   feature_selection: false # Options:
-  #   features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-  #     - name: "DPC"
-  #       parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-  #         gap_size: 0
       # - name: "DPC"
       #   parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
       #     gap_size: 2
