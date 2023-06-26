@@ -11,7 +11,8 @@ from pathlib import Path
 import yaml
 
 from PhageScanner.main.exceptions import (IncorrectValueError,
-                                          IncorrectYamlError)
+                                          IncorrectYamlError,
+                                          PipelineCommandError)
 from PhageScanner.main.utils import (CommandLineUtils, ConfigUtils, CSVUtils,
                                      DatabaseConfig, get_filename)
 
@@ -130,15 +131,9 @@ class TestCommandLineUtils(unittest.TestCase):
     def test_execute_command_fail(self):
         """Test execute_command handles command failure."""
         command = "nonexistent_command"
-        expected_output = b""
 
-        output = CommandLineUtils.execute_command(command)
-
-        self.assertEqual(
-            output,
-            expected_output,
-            msg="The command output doesn't match the expected result.",
-        )
+        with self.assertRaises(PipelineCommandError):
+            CommandLineUtils.execute_command(command)
 
 
 class TestConfigUtils(unittest.TestCase):

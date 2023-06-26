@@ -246,9 +246,7 @@ class DatabasePipeline(Pipeline):
             db_count_csv = self.directory / "result_cluster_ouput.csv"
             temp_db_count = {
                 "datetime": self.pipeline_start_time,
-                "class_name": filename.split("_")[1].removesuffix(
-                    ".fasta"
-                ),  # TODO: tests this works properly
+                "class_name": filename.split("_")[1].replace(".fasta", ""),
                 "clustering_threshold": self.config_object.get_clustering_threshold(),
                 "cluster_count": FastaUtils.count_entries_in_fasta(
                     fasta_file=class_clstr_file

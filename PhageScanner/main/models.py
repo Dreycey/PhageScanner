@@ -8,10 +8,14 @@ Description:
     models performance.
 """
 import logging
+import os
+import shutil
+import tempfile
 import time
 from abc import ABC, abstractclassmethod, abstractmethod
 from enum import Enum
 from pathlib import Path
+from typing import List
 
 import joblib
 import numpy as np
@@ -29,8 +33,11 @@ from sklearn.preprocessing import StandardScaler
 # SVM model
 from sklearn.svm import SVC
 
+from PhageScanner.main.blast_wrapper import BLASTWrapper
 # in-house libraries
-from PhageScanner.main.exceptions import IncorrectYamlError
+from PhageScanner.main.exceptions import (IncorrectValueError,
+                                          IncorrectYamlError, MissingFileError)
+from PhageScanner.main.utils import FastaUtils
 
 
 class ModelNames(Enum):
@@ -46,6 +53,7 @@ class ModelNames(Enum):
     multinaivebayes = "MULTINAIVEBAYES"
     gradboost = "GRADBOOST"
     randomforest = "RANDOMFOREST"
+    blast = "BLAST"
 
     @classmethod
     def get_model(cls, name):
@@ -56,6 +64,7 @@ class ModelNames(Enum):
             cls.multinaivebayes.value: MultiNaiveBayesClassModel(),
             cls.gradboost.value: GradientBoostingClassModel(),
             cls.randomforest.value: RandomForestClassModel(),
+            cls.blast.value: BlastClassifier(),
         }
         adapter = name2adapter.get(name)
 
@@ -284,3 +293,229 @@ class FFNNMultiClassModel(KerasModel):
             )
 
         self.model.fit(train_x, train_y, epochs=10, batch_size=32, verbose=1)
+
+
+class BlastClassifier(BLASTWrapper, Model):
+    """Creates a classifier around BLAST."""
+
+    def __init__(self, database_path=None):
+        """Construct the BLAST classifier."""
+        self.makedbcmd = "makeblastdb"
+        self.querycmd = "blastp"
+        self.dbpath = database_path
+        self.temp_directory = None
+
+    def __del__(self):
+        """Delete the temporary directory, if it exists."""
+        if self.temp_directory is not None and os.path.exists(self.temp_directory):
+            shutil.rmtree(self.temp_directory)
+
+    def save(self, file_path: Path):
+        """Save the blast database in a particular location.
+
+        Description:
+            For blast, this means *copying* the files to a new location.
+            So:
+                1. Make the new directory.
+                2. Move files.
+                3. Update DB path
+        """
+        # 1. Make the new directory.
+        os.makedirs(file_path, exist_ok=True)
+
+        # 2. Move files.
+        for filename in os.listdir(self.dbpath.parent):
+            # Construct full file paths
+            source = os.path.join(self.dbpath.parent, filename)
+            target = os.path.join(file_path, filename)
+
+            # Move file to target directory
+            shutil.copy(source, target)
+
+        # 3. Update DB path
+        self.dbpath = (file_path,)
+
+    @classmethod
+    def load(cls, file_path: Path):
+        """Create a new blast classifier class.
+
+        Description:
+            The only thing this really does is tell
+            blast where the database is located.
+        """
+        model_obj = cls(database_path=file_path / "BLAST_DB")
+        return model_obj
+
+    def train(self, train_x: List[str], train_y: List[int]):
+        """Create a blast database using model template.
+
+        Description:
+            This method creates a blast database using the same
+            input that other models/classifiers recieve. This
+            allows for treating blast identical to other classifiers.
+
+        Notes:
+            1.  This method creates a blast database using a temporary
+                directory that will contain the blast files.
+        """
+        # create a local temp fasta file for creating the database.
+        temp_fasta_path = Path(tempfile.NamedTemporaryFile(delete=True).name)
+        self._save_array_to_fasta(
+            array=train_x, output_file=temp_fasta_path, classes=train_y
+        )
+
+        # ensure proteins are saved correctly.
+        seq_count_in_temp_fasta = FastaUtils.count_entries_in_fasta(temp_fasta_path)
+        seq_count_expected = len(train_x)
+        if seq_count_in_temp_fasta != seq_count_expected:
+            err_message = "(Blast Model) Fasta file does not contain "
+            err_message += f"all proteins sequences: {temp_fasta_path}"
+            err_message += f"Should have {seq_count_expected} sequences "
+            err_message += f"but only has {seq_count_in_temp_fasta}"
+            raise MissingFileError(err_message)
+
+        # create the blast database.
+        self.temp_directory = tempfile.mkdtemp()
+        logging.debug(f"Creating blast database at `{self.temp_directory}`..")
+        self.dbpath = Path(self.temp_directory) / "BLAST_DB"
+        self.create_database(fasta_file=temp_fasta_path, db_name=self.dbpath)
+        logging.debug(f"(Finished) Creating blast database at `{self.temp_directory}`")
+
+    def predict(self, test_x: List[str]):
+        """Predict the classes of proteins provided as an array.
+
+        Description:
+            This function uses Blast as a classifier. The intended
+            purpose of blast is not for classifying proteins like this,
+            but it is the best way to compare to ML methods. Likewise,
+            it does work for this purpose.
+
+        Note:
+            1.  The proteins must not be turned into vectorized features!
+                The only way to use the module is to use the feature extractor
+                that does - well nothing. This allows for BLAST to use the
+                proteins in the input to create a local temp fasta file.
+            2.  The `self.dbpath` must be defined by this point. This can
+                happen by loading or `training` first. An error will be
+                raised if not.
+        """
+        # create a local temp fasta file for testing.
+        temp_fasta_path = Path(tempfile.NamedTemporaryFile(delete=True).name)
+        self._save_array_to_fasta(array=test_x, output_file=temp_fasta_path)
+
+        # ensure proteins are saved correctly.
+        seq_count_in_temp_fasta = FastaUtils.count_entries_in_fasta(temp_fasta_path)
+        seq_count_expected = len(test_x)
+        if seq_count_in_temp_fasta != seq_count_expected:
+            err_message = "(Blast Model) Fasta file does not contain "
+            err_message += f"all proteins sequences: {temp_fasta_path}. "
+            err_message += f"Should have {seq_count_expected} sequences "
+            err_message += f"but only has {seq_count_in_temp_fasta}"
+            raise MissingFileError(err_message)
+
+        # use the local fasta file to create the blast database.
+        logging.debug("Getting predictions using BLAST..")
+        prediction = self._get_classifications(temp_fasta_path)
+        logging.debug("(Finished) Getting predictions using BLAST!")
+
+        # raise an error if the length(predictions) != len(input proteins)
+        if len(prediction) != len(test_x):
+            error_message = "The length of the predicted classes is "
+            error_message += "not equal to the number of input proteins! "
+            error_message += (
+                f"predicted classes: {len(prediction)}, proteins: {len(test_x)}"
+            )
+            raise IncorrectValueError(error_message)
+
+        return prediction
+
+    def _save_array_to_fasta(
+        self, array: List[str], output_file: Path, classes: List[int] = None
+    ):
+        """Save the array to a local output file.
+
+        Description:
+            This is needed because the blast command line tool
+            uses local fasta files files for queries and for
+            building the blast database.
+        """
+        logging.debug(f"Creating fasta from array here: `{output_file}`..")
+        with open(output_file, "a") as output_fasta:
+            # get the name for the protein.
+            # NOTE: If building DB, classes should be an array of the
+            #       corresponding class index. (i.e. List[int])
+            for index, protein in enumerate(array):
+                if classes is not None:
+                    output_name = classes[index]
+                else:
+                    output_name = index
+                # get protein from the 1D vector format.
+                protein = protein[0]
+                # add protein and name to fasta.
+                output_fasta.write(f">{output_name}\n{protein}\n")
+
+        # ensure proteins are saved correctly.
+        seq_count_in_temp_fasta = FastaUtils.count_entries_in_fasta(output_file)
+        seq_count_expected = len(array)
+        if seq_count_in_temp_fasta != seq_count_expected:
+            err_message = "(Blast Model) Fasta file does not contain "
+            err_message += f"all proteins sequences: {output_file}"
+            err_message += f"Should have {seq_count_expected} sequences "
+            err_message += f"but only has {seq_count_in_temp_fasta}"
+            raise MissingFileError(err_message)
+
+        logging.debug(f"(Finished) Creating fasta from array here: `{output_file}`")
+
+    def _get_classifications(self, fasta_file: Path, threads: int = 1):
+        """Return the classifications.
+
+        Description:
+            Returns the classifications of the protein
+            given an array of proteins.
+
+        Note:
+            1.  The `self.dbpath` must be defined by this point. This can
+                happen by loading or `training` first. An error will be
+                raised if not.
+        """
+        # name of temporary file for output.
+        blast_temp_file = Path(tempfile.NamedTemporaryFile(delete=True).name)
+
+        # query blast db.
+        self.query(fasta_file=fasta_file, outputfile=blast_temp_file, threads=threads)
+
+        # ensure that blast produced an output file.
+        if not os.path.exists(blast_temp_file):
+            error_message = "The output blast file does not exist "
+            error_message += f"Here is the location (temp): `{blast_temp_file}`"
+            raise MissingFileError(error_message)
+        elif os.path.getsize(blast_temp_file) == 0:
+            error_message = "The output blast file is empty but exists. "
+            error_message += f"Here is the location (temp): `{blast_temp_file}`"
+            raise MissingFileError(error_message)
+
+        # open the output file and find classes.
+        output_classes = {}
+        current_accesion = None
+        top_score, current_class = 0, None
+        with open(blast_temp_file, "r") as temp_file:
+            for line in temp_file.readlines():
+                # parse the new line in the output file.
+                accession, class_name, score = line.strip("\n").split("\t")
+                score, class_name = int(score), int(class_name)
+
+                # find top class for each protein.
+                if current_accesion == accession:
+                    if top_score < score:
+                        top_score = score
+                        current_class = class_name
+                else:
+                    if current_accesion and (current_class is not None):
+                        output_classes[current_accesion] = current_class
+                    # update values for the new protein.
+                    current_accesion = accession
+                    top_score = score
+                    current_class = class_name
+            # last value
+            output_classes[current_accesion] = current_class
+        return np.array(list(output_classes.values()))

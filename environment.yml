@@ -9,6 +9,7 @@ dependencies:
   - beautifulsoup4=4.11.1
   - biopython=1.81
   - black=23.1.0
+  - blast=2.6.0
   - cd-hit=4.8.1
   - joblib=1.2.0
   - keras=2.11.0
