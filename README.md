@@ -25,13 +25,6 @@ It can now activated using:
 conda activate phagescanner
 ```
 
-This does not include tensorflow, which is required for running the keras models. Please install this within the conda environment using:
-
-```
-conda install -c conda-forge tensorflow
-```
-
-
 ## Pipeline Usage
 PhageScanner is a command line tool and machine learning pipeline for automating the process of finding genes of interest. In particular, it is useful for unifying the efforts of identifying Phage Virion Proteins, and can speed up the process of finding models and using them on metagenomic data, genomes and proteins.
 
