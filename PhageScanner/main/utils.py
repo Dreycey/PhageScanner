@@ -17,7 +17,8 @@ import pandas as pd
 import yaml
 
 from PhageScanner.main.exceptions import (IncorrectValueError,
-                                          IncorrectYamlError, PipelineCommandError)
+                                          IncorrectYamlError,
+                                          PipelineCommandError)
 
 
 def get_filename(filename: Union[str, Path]):
