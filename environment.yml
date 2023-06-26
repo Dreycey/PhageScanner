@@ -6,32 +6,32 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - beautifulsoup4=4.11.1
-  - biopython=1.81
-  - black=23.1.0
-  - blast=2.6.0
-  - cd-hit=4.8.1
-  - joblib=1.2.0
-  - keras=2.11.0
-  - megahit=1.2.9
-  - numpy=1.22.1
-  - pandas=0.25.3
-  - pathspec=0.11.1
-  - pdoc=13.0.1
-  - phanotate=2019.08.09
-  - pip=23.1.2
-  - python=3.8.16
-  - pyyaml=6.0
-  - requests=2.27.1
-  - scikit-learn=1.2.2
-  # - tensorflow=2.11.1
-  - tomli=2.0.1
-  - tox=4.3.5
-  - urllib3=1.26.15
-  - yaml=0.2.5
+  - beautifulsoup4>=4.11.1
+  - biopython>=1.81
+  - black>=23.1.0
+  - blast>=2.6.0
+  - cd-hit>=4.8.1
+  - joblib>=1.2.0
+  # - keras>=2.11.0
+  - megahit>=1.2.9
+  - numpy>=1.22.1
+  - pandas>=0.25.3
+  - pathspec>=0.11.1
+  - pdoc>=13.0.1
+  - phanotate>=2019.08.09
+  - pip>=23.1.2
+  - python>=3.8.16
+  - pyyaml>=6.0
+  - requests>=2.27.1
+  - scikit-learn>=1.2.2
+  # - tensorflow>=2.11.1
+  - tomli>=2.0.1
+  - tox>=4.3.5
+  - urllib3>=1.26.15
+  - yaml>=0.2.5
   - pip:
-      - coverage==7.2.2
-      - interrogate==1.5.0
-      - py==1.11.0
-      - tabulate==0.9.0
+      - coverage>==7.2.2
+      - interrogate>==1.5.0
+      - py>==1.11.0
+      - tabulate>==0.9.0
       - toml==0.10.2
