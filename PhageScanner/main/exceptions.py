@@ -29,6 +29,9 @@ class MissingFileError(PipelineExceptionError):
 
     pass
 
+class PipelineCommandError(PipelineExceptionError):
+    """Raised when a command has an error."""
+    pass 
 
 class IncorrectValueError(PipelineExceptionError):
     """Raised when an incorrect value is provided."""

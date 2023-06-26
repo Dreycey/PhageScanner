@@ -17,7 +17,7 @@ import pandas as pd
 import yaml
 
 from PhageScanner.main.exceptions import (IncorrectValueError,
-                                          IncorrectYamlError)
+                                          IncorrectYamlError, PipelineCommandError)
 
 
 def get_filename(filename: Union[str, Path]):
@@ -54,6 +54,12 @@ class CommandLineUtils:
 
         # get the output of the command
         output, error = process.communicate()
+
+        if len(error) > 0:
+            error_message = "There was an error executing a shell command.\n"
+            error_message += f"The error was: \n\n{error}\n\n"
+            error_message += f"The command was: \n\n{command}\n\n"
+            raise PipelineCommandError(error_message)
 
         return output
 

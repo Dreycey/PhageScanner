@@ -41,6 +41,7 @@ class FeatureExtractorNames(Enum):
     pseudoaac = "PSEUDOAAC"
     atc = "ATC"
     ctd = "CTD"
+    protein_seq = "PROTEINSEQ"
 
     @classmethod
     def get_extractor(cls, name, parameters: Optional[Dict]):
@@ -52,20 +53,22 @@ class FeatureExtractorNames(Enum):
             cls.pseudoaac.value: PseudoAACExtractor,
             cls.atc.value: ATCExtractor,
             cls.ctd.value: CTDExtractor,
+            cls.protein_seq.value: ProteinSequenceExtractor, # just returns the sequence.
         }
 
         # instantiate the class
-        extractor_class = name2extractor.get(name)
-        extractor_obj = extractor_class(parameters)
+        extractor_class = name2extractor.get(name, None)
 
         # log the given features extractor
         logging.debug(f"object {extractor_class} chosen for {name}")
 
         # raise exception if no match
-        if extractor_obj is None:
+        if extractor_class is None:
             msg = f"There is no feature: '{name}'! "
             msg += f"use: {list(name2extractor.keys())}"
             raise IncorrectYamlError(msg)
+        
+        extractor_obj = extractor_class(parameters)
 
         return extractor_obj
 
@@ -117,7 +120,17 @@ class ProteinFeatureExtraction(ABC):
             clean_protein.append(new_aa)
         return "".join(clean_protein)
 
+class ProteinSequenceExtractor(ProteinFeatureExtraction):
+    """Do nothing - return a protein sequence."""
 
+    def __init__(self, parameters: Optional[Dict] = None):
+        """Instantiate AAC extract method."""
+        pass
+    
+    def extract_features(self, protein: str):
+        """Just returns the protein sequence."""
+        return protein
+    
 class AACExtractor(ProteinFeatureExtraction):
     """Extraction method for Amino Acid Composition (AAC)"""
 
