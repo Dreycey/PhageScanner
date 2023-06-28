@@ -18,6 +18,8 @@ import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter, Retry
 
+from PhageScanner.main.exceptions import PipelineExceptionError
+
 
 class DatabaseAdapterNames(Enum):
     """Names of database adapters.
@@ -242,6 +244,20 @@ class EntrezAdapter(DatabaseAdapter):
         )
         search_url += f"&retmode={retmode}&retmax=1"
         response = requests.get(search_url)
+
+        # handle error response
+        # Context: For some reason Entrez gives error response?
+        #          looked into this and seems to be a problem
+        #          on their end. Seems like waiting helps.
+        if response.status_code == 500:
+            error_message = "Couldn't get data from Entrez. "
+            error_message += "This has been a problem in the past. "
+            error_message += "Can use without entrez, or you can try again later. "
+            error_message += "Waiting 30min+ seems to work. "
+            error_message += "If not resolved, check here: https://www.biostars.org/p/476638/"
+            raise PipelineExceptionError(error_message)
+        
+        # get content.
         soup = BeautifulSoup(response.content, features="xml")
         dataset_size = int(soup.find("Count").text)
 

@@ -9,6 +9,7 @@ Description:
 """
 import logging
 import os
+import random
 import shutil
 import tempfile
 import time
@@ -479,7 +480,7 @@ class BlastClassifier(BLASTWrapper, Model):
                 raised if not.
         """
         # name of temporary file for output.
-        blast_temp_file = Path(tempfile.NamedTemporaryFile(delete=True).name)
+        blast_temp_file = Path(tempfile.NamedTemporaryFile(delete=False).name)
 
         # query blast db.
         self.query(fasta_file=fasta_file, outputfile=blast_temp_file, threads=threads)
@@ -495,10 +496,31 @@ class BlastClassifier(BLASTWrapper, Model):
             raise MissingFileError(error_message)
 
         # open the output file and find classes.
+        output_classes = self._parse_blast_results(blast_temp_file)
+        classes_guessed = list(set(output_classes.values()))
+
+        # for each accession in the fasta, find the class/randomly choose
+        prediction_array = []
+        for accession, _ in FastaUtils.get_proteins(fasta_file):
+            if accession in output_classes:
+                prediction_array.append(output_classes[accession])
+            else:
+                logging.warning("Could not BLAST protein! Guessing the class randomly.")
+                prediction_array.append(random.choice(classes_guessed))
+
+        return np.array(prediction_array)
+    
+    def _parse_blast_results(self, results: Path):
+        """Parse the Blast output results.
+        
+        Description:
+            Parses the blast results, returning a dictionary
+            mapping each accession ID to the blast classification.
+        """
         output_classes = {}
         current_accesion = None
         top_score, current_class = 0, None
-        with open(blast_temp_file, "r") as temp_file:
+        with open(results, "r") as temp_file:
             for line in temp_file.readlines():
                 # parse the new line in the output file.
                 accession, class_name, score = line.strip("\n").split("\t")
@@ -518,4 +540,5 @@ class BlastClassifier(BLASTWrapper, Model):
                     current_class = class_name
             # last value
             output_classes[current_accesion] = current_class
-        return np.array(list(output_classes.values()))
+
+        return output_classes
