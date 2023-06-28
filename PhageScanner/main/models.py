@@ -136,12 +136,12 @@ class Model(ABC):
         result_dictionary = {
             "accuracy": np.round(accuracy_score(predictions, test_y), 3),
             "confusion_matrix": confusion_matrix(predictions, test_y),
-            "f1score": np.round(f1_score(predictions, test_y, average="weighted"), 3),
+            "f1score": np.round(f1_score(predictions, test_y, average=None), 3),
             "precision": np.round(
-                precision_score(predictions, test_y, average="weighted"), 3
+                precision_score(predictions, test_y, average=None), 3
             ),
             "recall": np.round(
-                recall_score(predictions, test_y, average="weighted"), 3
+                recall_score(predictions, test_y, average=None), 3
             ),
             "execution_time_seconds": round(execution_time, 6),
         }
