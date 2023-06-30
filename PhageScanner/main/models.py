@@ -58,7 +58,6 @@ from PhageScanner.main.exceptions import (
 from PhageScanner.main.utils import FastaUtils
 
 
-
 class ModelNames(Enum):
     """Names of onboarded models.
 
