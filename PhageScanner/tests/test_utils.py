@@ -10,11 +10,18 @@ from pathlib import Path
 
 import yaml
 
-from PhageScanner.main.exceptions import (IncorrectValueError,
-                                          IncorrectYamlError,
-                                          PipelineCommandError)
-from PhageScanner.main.utils import (CommandLineUtils, ConfigUtils, CSVUtils,
-                                     DatabaseConfig, get_filename)
+from PhageScanner.main.exceptions import (
+    IncorrectValueError,
+    IncorrectYamlError,
+    PipelineCommandError,
+)
+from PhageScanner.main.utils import (
+    CommandLineUtils,
+    ConfigUtils,
+    CSVUtils,
+    DatabaseConfig,
+    get_filename,
+)
 
 
 class TestGetFilename(unittest.TestCase):
