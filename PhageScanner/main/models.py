@@ -20,25 +20,43 @@ from typing import List
 
 import joblib
 import numpy as np
-from keras.layers import Dense, Dropout
-# FFNN
+from keras.layers import (
+    LSTM,
+    BatchNormalization,
+    Conv1D,
+    Dense,
+    Dropout,
+    Flatten,
+    MaxPooling1D,
+)
 from keras.models import Sequential, load_model
 from keras.optimizers import Adam
+from keras.regularizers import l1
+
+# scikit-learn
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
-                             precision_score, recall_score)
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-# scikit-learn models
-# SVM model
 from sklearn.svm import SVC
 
-from PhageScanner.main.blast_wrapper import BLASTWrapper
 # in-house libraries
-from PhageScanner.main.exceptions import (IncorrectValueError,
-                                          IncorrectYamlError, MissingFileError)
+from PhageScanner.main.blast_wrapper import BLASTWrapper
+from PhageScanner.main.exceptions import (
+    IncorrectValueError,
+    IncorrectYamlError,
+    MissingFileError,
+)
 from PhageScanner.main.utils import FastaUtils
+
 
 
 class ModelNames(Enum):
@@ -55,6 +73,9 @@ class ModelNames(Enum):
     gradboost = "GRADBOOST"
     randomforest = "RANDOMFOREST"
     blast = "BLAST"
+    logreg = "LOGREG"
+    cnn = "CNN"
+    rnn = "RNN"
 
     @classmethod
     def get_model(cls, name):
@@ -66,6 +87,9 @@ class ModelNames(Enum):
             cls.gradboost.value: GradientBoostingClassModel(),
             cls.randomforest.value: RandomForestClassModel(),
             cls.blast.value: BlastClassifier(),
+            cls.logreg.value: LogRegClassModel(),
+            cls.cnn.value: CNNMultiClassifier(),
+            cls.rnn.value: RNNMultiClassifier(),
         }
         adapter = name2adapter.get(name)
 
@@ -140,9 +164,7 @@ class Model(ABC):
             "precision": np.round(
                 precision_score(predictions, test_y, average=None), 3
             ),
-            "recall": np.round(
-                recall_score(predictions, test_y, average=None), 3
-            ),
+            "recall": np.round(recall_score(predictions, test_y, average=None), 3),
             "execution_time_seconds": round(execution_time, 6),
         }
 
@@ -224,6 +246,14 @@ class MultiNaiveBayesClassModel(ScikitModel):
         self.model = MultinomialNB(force_alpha=True)
 
 
+class LogRegClassModel(ScikitModel):
+    """Class for logistic regression one-verse-all model."""
+
+    def __init__(self):
+        """Instantiate a new LogRegClassModel."""
+        self.model = LogisticRegression(random_state=0, multi_class="ovr")
+
+
 class GradientBoostingClassModel(ScikitModel):
     """Class for gradient boosting model."""
 
@@ -290,6 +320,112 @@ class FFNNMultiClassModel(KerasModel):
         if self.model is None:
             self.model = self.build_model(
                 feature_vector_length=len(train_x[0]),
+                number_of_classes=max(train_y) + 1,
+            )
+
+        self.model.fit(train_x, train_y, epochs=10, batch_size=32, verbose=1)
+
+
+class RNNMultiClassifier(KerasModel):
+    """RNN MultiClassifier built"""
+
+    def __init__(self):
+        """Initialize the RNN MultiClassifier."""
+        self.model = None
+
+    def build_model(self, row_length, column_length, number_of_classes):
+        """Build the RNN Model.
+
+        Description:
+            Sets the layers and parameters for the RNN. The last functionality
+            of this method is comiling the model.
+        """
+        # Create a sequential model
+        model = Sequential()
+
+        # Add an LSTM layer
+        model.add(
+            LSTM(100, input_shape=(row_length, column_length), return_sequences=False)
+        )
+
+        # add FF layers
+        model.add(Dense(1000, activation="relu"))
+        model.add(Dense(100, activation="relu"))
+
+        # last, output, layer
+        model.add(Dense(number_of_classes, activation="softmax"))
+
+        # Compile the model
+        model.compile(
+            loss="sparse_categorical_crossentropy",
+            optimizer="adam",
+            metrics=["accuracy"],
+        )
+
+        return model
+
+    def train(self, train_x, train_y):
+        """Train an RNN on multiclass data"""
+        if self.model is None:
+            self.model = self.build_model(
+                row_length=len(train_x[0]),
+                column_length=len(train_x[0][0]),
+                number_of_classes=max(train_y) + 1,
+            )
+
+        self.model.fit(train_x, train_y, epochs=10, batch_size=32, verbose=1)
+
+
+class CNNMultiClassifier(KerasModel):
+    """CNN MultiClassifier built using the outline of DeepPVP."""
+
+    def __init__(self):
+        """Construct the CNN."""
+        self.model = None
+
+    def build_model(self, row_length, column_length, number_of_classes):
+        """Build the CNN.
+
+        Description:
+            Sets the layers and parameters for the CNN. The last functionality
+            of this method is comiling the model.
+        """
+        # Define the model
+        model = Sequential()
+        # Convolutional layer
+        model.add(
+            Conv1D(
+                filters=32,
+                kernel_size=3,
+                activation="relu",
+                input_shape=(row_length, column_length),
+            )
+        )
+        # Max pooling layer
+        model.add(MaxPooling1D(pool_size=4))
+        # Batch normalization layer
+        model.add(BatchNormalization())
+        # Flatten the output from the previous layer
+        model.add(Flatten())
+        # Fully connected layer
+        model.add(Dense(64, activation="relu", kernel_regularizer=l1(0.01)))
+        # Compile the model
+        # if number_of_classes > 2:
+        model.add(Dense(number_of_classes, activation="softmax"))
+        model.compile(
+            loss="sparse_categorical_crossentropy",
+            optimizer="adam",
+            metrics=["accuracy"],
+        )
+
+        return model
+
+    def train(self, train_x, train_y):
+        """Train an CNN on multiclass data"""
+        if self.model is None:
+            self.model = self.build_model(
+                row_length=len(train_x[0]),
+                column_length=len(train_x[0][0]),
                 number_of_classes=max(train_y) + 1,
             )
 
@@ -509,10 +645,10 @@ class BlastClassifier(BLASTWrapper, Model):
                 prediction_array.append(random.choice(classes_guessed))
 
         return np.array(prediction_array)
-    
+
     def _parse_blast_results(self, results: Path):
         """Parse the Blast output results.
-        
+
         Description:
             Parses the blast results, returning a dictionary
             mapping each accession ID to the blast classification.

@@ -26,9 +26,12 @@ from PhageScanner.main.clustering_wrappers import ClusteringWrapperNames
 from PhageScanner.main.database_adapters import DatabaseAdapterNames
 from PhageScanner.main.DNA import DNA
 from PhageScanner.main.exceptions import IncorrectValueError
-from PhageScanner.main.feature_extractors import (FeatureExtractorNames,
-                                                  ProteinFeatureAggregator,
-                                                  ProteinFeatureExtraction)
+from PhageScanner.main.feature_extractors import (
+    FeatureExtractorNames,
+    ProteinFeatureAggregator,
+    ProteinFeatureExtraction,
+    SequentialProteinFeatureAggregator,
+)
 from PhageScanner.main.models import ModelNames
 from PhageScanner.main.orffinder_wrappers import OrfFinderWrapperNames
 from PhageScanner.main.utils import CSVUtils, FastaUtils
@@ -75,13 +78,13 @@ class Pipeline(ABC):
             feature_list.append(extractor)
 
         # create feature aggregator (combines features)
-        # kmer_size = self.config_object.is_sequential(model_name)
-        # if kmer_size:
-        #     aggregator = SequentialProteinFeatureAggregator(
-        #         extractors=feature_list, kmer_size=11
-        #     )  # TODO: update this
-        # else:
-        aggregator = ProteinFeatureAggregator(extractors=feature_list)
+        segment_size = self.config_object.sequential(model_name)
+        if segment_size:
+            aggregator = SequentialProteinFeatureAggregator(
+                extractors=feature_list, segment_size=segment_size
+            )
+        else:
+            aggregator = ProteinFeatureAggregator(extractors=feature_list)
 
         # use the aggregator to extract features from self.dataframe
         logging.info(f"extracting features for model: '{model_name}': {feature_list}")
@@ -512,9 +515,15 @@ class TrainingPipeline(Pipeline):
                     - These are saved for each k-fold tested.
         """
         # save the confusion matrix
-        # TODO: save the confusion matrix
-        # confusion_matrix_output_path = self.directory / "model_results.csv"
-        # confusion_matrix = model_results["confusion_matrix"]
+        confusion_matrix_output_path = (
+            self.directory / f"{model_name}_confusion_matrix.csv"
+        )
+        np.savetxt(
+            confusion_matrix_output_path,
+            model_results["confusion_matrix"],
+            delimiter=",",
+            fmt="%.3f",
+        )
         del model_results["confusion_matrix"]
 
         # Save the f1score, accuracy, and precision
@@ -523,15 +532,36 @@ class TrainingPipeline(Pipeline):
             "datetime",
             "model",
             "kfold_iteration",
-            "f1score",
             "accuracy",
+            "f1score",
             "precision",
             "recall",
             "execution_time_seconds",
+            "features",
         ]
+
+        # obtain a list of features and parameters.
+        features = []
+        for feature, params in self.config_object.get_model_features(model_name):
+            if params:
+                param_strs = [f"{k}={v}" for k, v in params.items()]
+                params_text = "; ".join(param_strs)
+                feature_string = f"{feature} ({params_text})"
+            else:
+                feature_string = feature
+            features.append(feature_string)
+
+        # add columns not originally present in the dataframe
         model_results["datetime"] = self.pipeline_start_time
         model_results["model"] = model_name
         model_results["kfold_iteration"] = iteration
+        model_results["features"] = features
+
+        # convert columns with many entries to strings
+        for key in ["f1score", "precision", "recall", "features"]:
+            model_results[key] = "\t".join(map(str, model_results[key]))
+
+        # save results to disk.
         CSVUtils.appendcsv(
             data_dict=[model_results],  # input must be an array.
             fieldnames=csv_file_headers,

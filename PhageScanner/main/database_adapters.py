@@ -254,9 +254,11 @@ class EntrezAdapter(DatabaseAdapter):
             error_message += "This has been a problem in the past. "
             error_message += "Can use without entrez, or you can try again later. "
             error_message += "Waiting 30min+ seems to work. "
-            error_message += "If not resolved, check here: https://www.biostars.org/p/476638/"
+            error_message += (
+                "If not resolved, check here: https://www.biostars.org/p/476638/"
+            )
             raise PipelineExceptionError(error_message)
-        
+
         # get content.
         soup = BeautifulSoup(response.content, features="xml")
         dataset_size = int(soup.find("Count").text)

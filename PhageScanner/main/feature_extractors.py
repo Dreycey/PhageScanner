@@ -10,6 +10,7 @@ References:
     are used here.
     DOI: https://doi.org/10.1016/j.bbapap.2020.140406
 """
+import hashlib
 import logging
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -18,10 +19,12 @@ from typing import Dict, List, Optional
 import numpy as np
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
-from PhageScanner.main.exceptions import (IncorrectValueError,
-                                          IncorrectYamlError, ProteinError)
+from PhageScanner.main.exceptions import (
+    IncorrectValueError,
+    IncorrectYamlError,
+    ProteinError,
+)
 from PhageScanner.third_party.CTD import CalculateCTD
-# 3rd party library; great feature extraction methods.
 from PhageScanner.third_party.PseudoAAC import _GetPseudoAAC
 
 
@@ -37,11 +40,14 @@ class FeatureExtractorNames(Enum):
 
     aac = "AAC"
     dpc = "DPC"
+    tpc = "TPC"
     iso = "ISO"
     pseudoaac = "PSEUDOAAC"
     atc = "ATC"
     ctd = "CTD"
     protein_seq = "PROTEINSEQ"
+    hash_seq = "HASH_SEQ"
+    onehot = "SEQUENTIALONEHOT"
 
     @classmethod
     def get_extractor(cls, name, parameters: Optional[Dict]):
@@ -49,11 +55,14 @@ class FeatureExtractorNames(Enum):
         name2extractor = {
             cls.aac.value: AACExtractor,
             cls.dpc.value: DPCExtractor,
+            cls.tpc.value: TPCExtractor,
             cls.iso.value: IsoelectricExtractor,
             cls.pseudoaac.value: PseudoAACExtractor,
             cls.atc.value: ATCExtractor,
             cls.ctd.value: CTDExtractor,
             cls.protein_seq.value: ProteinSequenceExtractor,
+            cls.hash_seq.value: HashExtractor,
+            cls.onehot.value: SequentialOneHot,
         }
 
         # instantiate the class
@@ -236,11 +245,60 @@ class DPCExtractor(ProteinFeatureExtraction):
         return dpc_vec
 
 
-class IsoelectricExtractor(ProteinFeatureExtraction):
-    """Extraction method for obtaining an Isoelectric point from a protein"""
+class TPCExtractor(ProteinFeatureExtraction):
+    """Extraction method for Tripeptide composition (TPC)"""
 
     def __init__(self, parameters: Optional[Dict] = None):
-        """Instantiate DPC extract method."""
+        """Instantiate TPC extract method."""
+        self.aa2index = {}
+
+        # make map
+        index = 0
+        for aa1 in self.canonical_amino_acids:
+            for aa2 in self.canonical_amino_acids:
+                for aa3 in self.canonical_amino_acids:
+                    self.aa2index[aa1 + aa2 + aa3] = index
+                    index += 1
+
+    def __eq__(self, other):
+        """Set classes equal if same type."""
+        if isinstance(other, TPCExtractor):
+            return True
+        return False
+
+    def extract_features(self, protein: str):
+        """Extract Tripeptide composition.
+
+        Description:
+            This method counts the frequency of 3 cooccuring
+            *adjacent* amino acids within a given protein.
+        """
+        # create vector (len 8000)
+        tpc_vec = np.zeros(len(self.canonical_amino_acids) ** 3)
+
+        # count cooccuring tripeptides
+        for aa_p1 in range(len(protein) - 2):
+            tripeptide = protein[aa_p1 : aa_p1 + 3]
+            index = self.aa2index[tripeptide]
+            tpc_vec[index] += 1  # increment counter at tripeptide index
+
+        # get frequency
+        for index, count in enumerate(tpc_vec):
+            tpc_vec[index] = count / len(protein)
+
+        return tpc_vec
+
+
+class IsoelectricExtractor(ProteinFeatureExtraction):
+    """Extraction method for obtaining an Isoelectric point from a protein
+
+    Description:
+        Many methods have this as a standalone feature, so we added
+        this here for reimplementation compatibility.
+    """
+
+    def __init__(self, parameters: Optional[Dict] = None):
+        """Instantiate isoelectric extract method."""
         pass
 
     def extract_features(self, protein: str):
@@ -279,6 +337,98 @@ class ATCExtractor(ProteinFeatureExtraction):
                 index = self.atom2index[atom]
                 atc_vec[index] += count
         return atc_vec / sum(atc_vec)
+
+
+class SequentialOneHot(ProteinFeatureExtraction):
+    """Extraction method for obtaining a 20x2000 matrix of one hot encodings.
+
+    Description:
+        The CNN and RNN methods need sequential or 2D information to
+        perfrom predictions. To enable this on proteins, we take the same
+        approach as Zhencheng Fang et al. (2022) and perform a one hot
+        encoding for proteins less than 2000aa in length.
+
+    Note:
+        Of particular note: For proteins longer than 2000aa, we only take the
+        first 2000 amino acids. Zhencheng Fang et al. (2022) completely neglected
+        these proteins, but we need to allow for them as they may appear in metagenomic
+        data or genomes. For proteins less than 2000aa, these are 'padded' with zeros
+        at the end.
+
+    Reference:
+        Zhencheng Fang et al. (2022) - DOI: https://doi.org/10.1093/gigascience/giac076
+    """
+
+    def __init__(self, parameters: Optional[Dict] = None):
+        """Instantiate tokenization extract method."""
+        self.aa2index = {aa: ind for ind, aa in enumerate(self.canonical_amino_acids)}
+        self.matrix_length = 1000
+
+    def extract_features(self, protein: str):
+        """Obtain an tokenization of the protein sequence."""
+        tokenized_protein = np.zeros(
+            (self.matrix_length, len(self.canonical_amino_acids))
+        )
+        for index, aa in enumerate(protein):
+            if index >= self.matrix_length:
+                break
+            aa_index = self.aa2index[aa]
+            tokenized_protein[index][aa_index] = 1
+        return tokenized_protein
+
+
+class HashExtractor(ProteinFeatureExtraction):
+    """Extraction method implimenting a hashed vector of a protein.
+
+    Description:
+        This method was thought of as a promising
+        approach to allow for larger kmer sizes while preventing
+        large feature vectors. Instead of growing the feature
+        vector to larger kmer sizes, we can instead hash arbitrary
+        sized kmers into a fixed size feature vector. Much similiar
+        to the approach used by bloom filters, this method differs as
+        we incrememnt each hashed index and turn this into a frequency.
+    """
+
+    def __init__(self, parameters: Optional[Dict] = None):
+        """Instantiate hash extract method."""
+        # raise error if None passed to parameter
+        if parameters is None:
+            raise IncorrectValueError(
+                "HashExtractor: must have vec_size param! Not None"
+            )
+
+        # get parameters.
+        self.vec_size = parameters.get("vec_size", 50)
+        self.kmer_size = parameters.get("kmer_size", 50)
+
+    def extract_features(self, protein: str):
+        """Obtain an vector hased to a given size."""
+        hash_vec = np.zeros(self.vec_size)
+
+        # ensure proteins is uft-8
+        protein = protein.encode("utf-8")
+
+        if len(protein) < self.kmer_size:
+            error_message = (
+                "The kmer_size is greater than the length of the protein string. "
+            )
+            error_message += (
+                f"kmer size {self.kmer_size} > {len(protein)} protein length"
+            )
+            raise IncorrectYamlError(error_message)
+
+        # get hashed kmers.
+        for index in range(len(protein) - self.kmer_size + 1):
+            self.hash_object = hashlib.sha256()  # create hash function
+            self.hash_object.update(protein[index : index + self.kmer_size])  # add kmer
+            hash_index = int(self.hash_object.hexdigest(), 16) % self.vec_size
+            hash_vec[hash_index] = 1  # increment hash vec index
+
+        # turn into frequencies.
+        hash_vec /= len(protein) - self.kmer_size
+
+        return hash_vec
 
 
 class CTDExtractor(ProteinFeatureExtraction):
@@ -349,6 +499,8 @@ class ProteinFeatureAggregator:
         extracted_features = []
         for extractor in self.extractors:
             extracted_features.append(extractor.extract_features(protein))
+            if type(extractor) == SequentialOneHot:
+                return extracted_features
 
         # Combine extracted features into a single matrix or vector
         combined_features = np.hstack(extracted_features)
@@ -368,34 +520,47 @@ class SequentialProteinFeatureAggregator:
         sequential information in the protein sequence.
     """
 
-    def __init__(self, extractors: List[ProteinFeatureExtraction], kmer_size=10):
+    def __init__(self, extractors: List[ProteinFeatureExtraction], segment_size=10):
         """Initialize feature aggregator."""
         self.extractors = extractors
-        self.kmer_size = kmer_size
+        self.segment_size = segment_size
 
-        if self.kmer_size <= 10:
-            err_msg = "Sequential Aggregator requires kmersize > 10"
+        if self.segment_size <= 1:
+            err_msg = "Sequential Aggregator requires sequential > 1"
             raise IncorrectYamlError(err_msg)
 
     def extract_features(self, protein):
         """Extract the features by calling each extractor on peptide substrings."""
-        sequential_features = []
-
-        if self.kmer_size > len(protein):
+        # Ensure the protein is larger than the segment size
+        if self.segment_size > len(protein):
             err_msg = "Sequential Aggregator requires kmersize < protein length "
-            err_msg += f"the kmer size of {self.kmer_size} > {len(protein)}. "
+            err_msg += f"the kmer size of {self.segment_size} > {len(protein)}. "
             err_msg += f"Protein: {protein}"
             raise IncorrectYamlError(err_msg)
 
-        for kmer_index in range(0, len(protein) - self.kmer_size):
-            protein_kmer = protein[kmer_index : kmer_index + self.kmer_size]
+        # initialize needed variables.
+        sequential_features = []
+        protein_sub_lengths = len(protein) // self.segment_size
+        count = 0
+
+        # for each segment, obtain the feature vector.
+        for i in range(0, len(protein), protein_sub_lengths):
+            if count == self.segment_size:
+                break
+
+            # get segment
+            protein_subseq = protein[i : i + protein_sub_lengths]
+
+            # get features for sub sequence
             extracted_features = []
             for extractor in self.extractors:
-                extracted_features.append(extractor.extract_features(protein_kmer))
+                extracted_features.append(extractor.extract_features(protein_subseq))
 
             # Combine extracted features into a single matrix or vector
             sequential_features.append(np.hstack(extracted_features))
-        return np.array(sequential_features)
+            count += 1
+
+        return [sequential_features]
 
 
 if __name__ == "__main__":
@@ -433,7 +598,7 @@ if __name__ == "__main__":
 
     # test aggregator
     sequential_aggregator = SequentialProteinFeatureAggregator(
-        extractors=[aac, dpc, iso, pseudoaac, atc, ctd], kmer_size=11
+        extractors=[aac, dpc, iso, pseudoaac, atc, ctd], segment_size=11
     )
     out = sequential_aggregator.extract_features(
         "KLEEQDKPRADAIMALHEHKDYQPLLRAMANVPCIDVDTAKN"

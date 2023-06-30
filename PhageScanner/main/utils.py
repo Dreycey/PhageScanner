@@ -16,9 +16,11 @@ from typing import Dict, List, Union
 import pandas as pd
 import yaml
 
-from PhageScanner.main.exceptions import (IncorrectValueError,
-                                          IncorrectYamlError,
-                                          PipelineCommandError)
+from PhageScanner.main.exceptions import (
+    IncorrectValueError,
+    IncorrectYamlError,
+    PipelineCommandError,
+)
 
 
 def get_filename(filename: Union[str, Path]):
@@ -202,12 +204,12 @@ class TrainingConfig(ConfigUtils):
                         parameters = None
                     yield feature_name, parameters
 
-    def is_sequential(self, model_name):
+    def sequential(self, model_name):
         """Return True if the model takes in sequential data."""
         for m in self.config["models"]:
             if m["name"] == model_name:
-                if m["sequential"]:
-                    return True
+                if m["model_info"]["sequential"]:
+                    return m["model_info"]["sequential"]
         return False
 
     def get_predictor_model_name(self, model_name):
