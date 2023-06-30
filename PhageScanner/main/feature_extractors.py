@@ -66,7 +66,7 @@ class FeatureExtractorNames(Enum):
             cls.hash_seq.value: HashExtractor,
             cls.onehot.value: SequentialOneHot,
             cls.pcp.value: PCPExtractor,
-            cls.chemfeatures.value: ChemFeatureExtractor
+            cls.chemfeatures.value: ChemFeatureExtractor,
         }
 
         # instantiate the class
@@ -310,6 +310,7 @@ class IsoelectricExtractor(ProteinFeatureExtraction):
         analysis = ProteinAnalysis(protein)
         return analysis.isoelectric_point()
 
+
 class PCPExtractor(ProteinFeatureExtraction):
     """Extraction method for obtaining a list of biological features.
 
@@ -321,16 +322,16 @@ class PCPExtractor(ProteinFeatureExtraction):
 
     References:
         DOI: https://doi.org/10.3389/fmicb.2018.00476
-        Qoute: (v) PCP: We employed 11 representative PCP 
-                attributes of amino acids for feature extraction 
+        Qoute: (v) PCP: We employed 11 representative PCP
+                attributes of amino acids for feature extraction
                 1. polar
                 2. hydrophobic
-                3. charged, 
+                3. charged,
                 4. aliphatic
-                5. aromatic, 
+                5. aromatic,
                 6. positively charged
                 7. negatively charged
-                8. small/tiny 
+                8. small/tiny
                 9. large,
                 10. peptide mass
     """
@@ -342,18 +343,18 @@ class PCPExtractor(ProteinFeatureExtraction):
     def is_hydrophobic(self, protein: str):
         """Test of a protein is hydrophobic."""
         # Hydrophobic amino acids
-        hydrophobic_aa = ['V', 'L', 'I', 'M', 'F', 'W', 'P']
+        hydrophobic_aa = ["V", "L", "I", "M", "F", "W", "P"]
 
         # Count hydrophobic residues
         hydrophobic_count = sum(1 for aa in protein if aa in hydrophobic_aa)
-        
+
         # Return True if more than half of the residues are hydrophobic
         return hydrophobic_count > len(protein) / 2
 
     def polarity(self, protein_sequence):
-        """Returns the frequency of polar residues."""
+        """Return the frequency of polar residues."""
         # polar amino acids
-        polar_aa = ['S', 'T', 'N', 'Q', 'Y']
+        polar_aa = ["S", "T", "N", "Q", "Y"]
 
         # count polar residues
         polar_count = sum(1 for aa in protein_sequence if aa in polar_aa)
@@ -364,7 +365,7 @@ class PCPExtractor(ProteinFeatureExtraction):
     def is_aliphatic(self, protein_sequence):
         """Check if a protein sequence is aliphatic"""
         # Define aliphatic amino acids
-        aliphatic_aa = ['A', 'V', 'I', 'L']
+        aliphatic_aa = ["A", "V", "I", "L"]
 
         # Count aliphatic residues
         aliphatic_count = sum(1 for aa in protein_sequence if aa in aliphatic_aa)
@@ -382,19 +383,20 @@ class PCPExtractor(ProteinFeatureExtraction):
         is_large = len(protein) > 200
         # create feature vector
         bio_features = [
-            self.polarity(protein), # 1. polarity
-            self.is_hydrophobic(protein), # 2. hydrophobic
-            analysis.charge_at_pH(pH=7), # 3. charged
-            self.is_aliphatic(protein), # 4. aliphatic
-            analysis.aromaticity(), # 5. aromatic
-            is_poscharged, # 6. positively charged
-            is_negcharged, # 7. negatively charged
-            is_small, # 8. small/tiny
-            is_large, # 9. large
-            analysis.molecular_weight(), # 10. peptide mass
+            self.polarity(protein),  # 1. polarity
+            self.is_hydrophobic(protein),  # 2. hydrophobic
+            analysis.charge_at_pH(pH=7),  # 3. charged
+            self.is_aliphatic(protein),  # 4. aliphatic
+            analysis.aromaticity(),  # 5. aromatic
+            is_poscharged,  # 6. positively charged
+            is_negcharged,  # 7. negatively charged
+            is_small,  # 8. small/tiny
+            is_large,  # 9. large
+            analysis.molecular_weight(),  # 10. peptide mass
         ]
         return bio_features
-    
+
+
 class ChemFeatureExtractor(PCPExtractor):
     """Extraction method for obtaining many physical/chemical features.
 
@@ -417,26 +419,26 @@ class ChemFeatureExtractor(PCPExtractor):
         helix, turn, sheet = analysis.secondary_structure_fraction()
         # create feature vector
         bio_features = [
-            self.polarity(protein), # 1. polarity
-            self.is_hydrophobic(protein), # 2. hydrophobic
-            analysis.charge_at_pH(pH=1.0), # 3. charge at acidic env
-            analysis.charge_at_pH(pH=7), # 4. charge in water
-            analysis.charge_at_pH(pH=10.0), # 5. charge in basic env
-            self.is_aliphatic(protein), # 6. aliphatic
-            analysis.aromaticity(), # 7. aromatic
-            is_poscharged, # 8. positively charged
-            is_negcharged, # 9. negatively charged
-            is_small, # 10. small/tiny
-            is_large, # 11. large
-            analysis.molecular_weight(), # 12. peptide mass
-            analysis.isoelectric_point(), # 13. isoelectric point
+            self.polarity(protein),  # 1. polarity
+            self.is_hydrophobic(protein),  # 2. hydrophobic
+            analysis.charge_at_pH(pH=1.0),  # 3. charge at acidic env
+            analysis.charge_at_pH(pH=7),  # 4. charge in water
+            analysis.charge_at_pH(pH=10.0),  # 5. charge in basic env
+            self.is_aliphatic(protein),  # 6. aliphatic
+            analysis.aromaticity(),  # 7. aromatic
+            is_poscharged,  # 8. positively charged
+            is_negcharged,  # 9. negatively charged
+            is_small,  # 10. small/tiny
+            is_large,  # 11. large
+            analysis.molecular_weight(),  # 12. peptide mass
+            analysis.isoelectric_point(),  # 13. isoelectric point
             # analysis.instability_index(), # 14. instability index
             # analysis.flexibility(), # 15. Flexibility
             # analysis.gravy(), # 16. Gravy index
-            helix, # 17. Helix frequency
-            turn, # 18. Turn frequency
-            sheet, # 19. Betasheet frequency
-            #analysis.molar_extinction_coefficient(), # 20. Molar extinction coefficient
+            helix,  # 17. Helix frequency
+            turn,  # 18. Turn frequency
+            sheet,  # 19. Betasheet frequency
+            # analysis.molar_extinction_coefficient(), # 20. Molar extinction
         ]
         return bio_features
 
