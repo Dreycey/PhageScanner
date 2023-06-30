@@ -260,6 +260,14 @@ class PredictionConfig(ConfigUtils):
         """Get the name of the orffinder from the configuration."""
         return self.config["orffinder"]
 
+    def sequential(self, model_name):
+        """Return True if the model takes in sequential data."""
+        for m in self.config["models"]:
+            if m["name"] == model_name:
+                if m["model_info"]["sequential"]:
+                    return m["model_info"]["sequential"]
+        return False
+    
     def get_model_path(self, model_name):
         """Get the model path from the model name."""
         for m in self.config["models"]:
