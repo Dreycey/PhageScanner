@@ -58,6 +58,7 @@ class CommandLineUtils:
         # get the output of the command
         output, error = process.communicate()
 
+        # NOTE: ignoring errors from phanotate since it throws errors without tscan
         if len(error) > 0 and not command.startswith("phanotate.py"):
             error_message = "There was an error executing a shell command.\n"
             error_message += f"The error was: \n\n{error}\n\n"
