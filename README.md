@@ -34,19 +34,23 @@ PhageScanner is a command line tool and machine learning pipeline for automating
     ```
     python phagescanner.py database -c Path/To/Config.yaml -o path/to/output/directory/ -n name_for_files_<classname>
     ```
-    - Example
+    - Example (multiclass)
     ```
-    python phagescanner.py database -c configs/database_multiclass.yaml -o ./benchmarking_database/ -n benchmarking -v info
+    python phagescanner.py database -c configs/multiclass_pvps/database_multiclass.yaml -o ./benchmarking_database/ -n benchmarking -v info
 
     ```
-2. Traing and Test ML models
+2. Training and Test ML models
     - Basic usage
     ```
     python phagescanner.py train -c Path/To/Config.yaml -o path/to/output/directory/ -n name_for_files_<classname> -v debug
     ```
-    - Example
+    - Example (multiclass)
     ```
-    python phagescanner.py train -c configs/training_multiclass.yaml -o training_output -n TRAIN -v debug
+    python phagescanner.py train -c configs/multiclass_pvps/training_multiclass.yaml -o training_output -n TRAIN -v debug
+    ```
+    - Example (binary pvps)
+    ```
+    python phagescanner.py train -c configs/binary_pvps/training_binary.yaml -o binary_training_output -n TRAIN -v debug
     ```
 3. Run on metagenomic data, genomes or proteins
     - Basic usage

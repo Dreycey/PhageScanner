@@ -1,8 +1,8 @@
 models:
-  - name: "PhANNs (FFNN)"
+  - name: "CNN TESTING"
     path: "model.pickle"
     model_info:
-      model_name: "FFNN"
+      model_name: "CNN"
       is_sequential: false
     sequential: false
     class_balancing: false # Options: "downsample"
@@ -11,13 +11,10 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 0
-      - name: "DPC"
-        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-          gap_size: 2
-  - name: "PVP-SVM (SVM)"
+  - name: "Baseline Classifier (Logistic Regression)"
     path: "model.pickle"
     model_info:
-      model_name: "SVM"
+      model_name: "LOGREG"
       is_sequential: false
     sequential: false
     class_balancing: false # Options: "downsample"

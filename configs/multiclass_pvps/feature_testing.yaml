@@ -1,0 +1,100 @@
+models:
+  - name: "FT-DPC (Logistic Regression)"
+    path: "model.pickle"
+    model_info:
+      model_name: "LOGREG"
+      is_sequential: false
+    sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "DPC"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          gap_size: 0
+  - name: "FT-DPC-g1 (Logistic Regression)"
+    path: "model.pickle"
+    model_info:
+      model_name: "LOGREG"
+      is_sequential: false
+    sequential: false
+    features:
+      - name: "DPC"
+        parameters:
+          gap_size: 1
+  - name: "FT-TPC (Logistic Regression)"
+    path: "model.pickle"
+    model_info:
+      model_name: "LOGREG"
+      is_sequential: false
+    sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "TPC"
+  - name: "FT-AAC (Logistic Regression)"
+    path: "model.pickle"
+    model_info:
+      model_name: "LOGREG"
+      is_sequential: false
+    sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "AAC"
+  - name: "FT-ISO (Logistic Regression)"
+    path: "model.pickle"
+    model_info:
+      model_name: "LOGREG"
+      is_sequential: false
+    sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "ISO"
+  - name: "FT-ATC (Logistic Regression)"
+    path: "model.pickle"
+    model_info:
+      model_name: "LOGREG"
+      is_sequential: false
+    sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "ATC"
+  - name: "FT-CTD (Logistic Regression)"
+    path: "model.pickle"
+    model_info:
+      model_name: "LOGREG"
+      is_sequential: false
+    sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "CTD"
+  - name: "HashSeq (SVM)"
+    model_info:
+      model_name: "SVM"
+      sequential: false
+    class_balancing: false # Options: "downsample"
+    features: 
+      - name: "HASH_SEQ"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          vec_size: 500
+          kmer_size: 2
+      - name: "HASH_SEQ"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          vec_size: 500
+          kmer_size: 3
+      - name: "HASH_SEQ"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          vec_size: 500
+          kmer_size: 4
+classes:
+  - name: MajorCapsid # No spaces. Can differ between pipelines.
+    final_csv: "benchmarking_database/benchmarking_MajorCapsid.csv" # local path.
+  - name: MinorCapsid
+    final_csv: "benchmarking_database/benchmarking_MinorCapsid.csv"
+  - name: Baseplate
+    final_csv: "benchmarking_database/benchmarking_Baseplate.csv"
+  - name: MajorTail
+    final_csv: "benchmarking_database/benchmarking_MajorTail.csv"
+  - name: MinorTail
+    final_csv: "benchmarking_database/benchmarking_MinorTail.csv"
+  - name: Portal
+    final_csv: "benchmarking_database/benchmarking_Portal.csv"
+  - name: TailFiber
+    final_csv: "benchmarking_database/benchmarking_TailFiber.csv"
+  - name: Collar
+    final_csv: "benchmarking_database/benchmarking_Collar.csv"
+  - name: shaft
+    final_csv: "benchmarking_database/benchmarking_shaft.csv"
+  - name: HTJ
+    final_csv: "benchmarking_database/benchmarking_HTJ.csv"
