@@ -69,6 +69,28 @@ PhageScanner is a command line tool and machine learning pipeline for automating
     ```
     python phagescanner.py predict -c configs/prediction.yaml -t "protein" -o prediction_output -n OUTPREFIX -i examples/Phage_Collar_proteins.fa -v debug
     ```
+# PhageScanner GUI
+
+PhageScanner has a GUI for viewing the results of the prediction pipeline to allow for scraping proteins of interest. This GUI is a visual tool for viewing the results of the prediction pipeline. The benefit of this GUI is that it allows for vissually mining proteins that may be interesting for further analysis, or for observing where the proteins appear within a genome or contig (along with synteny).
+
+![Phage Scanner GUI](misc/gui_image.png)
+
+## Usage
+
+1. Create images from the output of running the `predict` pipeline.
+    - run the `predict` pipeline on genomes or reads
+    ```
+    python phagescanner.py predict -c configs/prediction.yaml -t "genome" -o prediction_output -n "genomes" -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
+    ```
+    - use output from the `predict` pipeline to create images
+    ```
+    python phagescanner_gui.py create_images -p prediction_output/OUTPREFIX_predictions.csv -o output_images/
+    ```
+2. Open the GUI using the path to the prediction output and the images path.
+    - Open the GUI
+    ```
+    python phagescanner_gui.py gui -p prediction_output/OUTPREFIX_predictions.csv -o output_images/
+    ```
 
 # Notes
 
