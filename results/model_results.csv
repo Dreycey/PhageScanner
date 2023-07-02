@@ -1,0 +1,109 @@
+datetime,model,kfold_iteration,f1score,accuracy,precision,recall,execution_time_seconds
+Sun Jun 25 15:05:24 2023,Ru et al. (Random Forest),0,0.197,0.2,0.222,0.2,0.007671
+Sun Jun 25 15:05:24 2023,Ru et al. (Random Forest),1,0.414,0.4,0.456,0.4,0.00865
+Sun Jun 25 15:05:24 2023,Ru et al. (Random Forest),2,0.213,0.2,0.275,0.2,0.007924
+Sun Jun 25 15:05:24 2023,Ru et al. (Random Forest),3,0.318,0.3,0.406,0.3,0.008361
+Sun Jun 25 15:05:24 2023,Ru et al. (Random Forest),4,0.303,0.275,0.356,0.275,0.008155
+Sun Jun 25 15:05:24 2023,Testing.. (Gradient Boosting),0,0.193,0.2,0.211,0.2,0.000392
+Sun Jun 25 15:05:24 2023,Testing.. (Gradient Boosting),1,0.246,0.2,0.333,0.2,0.000466
+Sun Jun 25 15:05:24 2023,Testing.. (Gradient Boosting),2,0.139,0.125,0.188,0.125,0.000487
+Sun Jun 25 15:05:24 2023,Testing.. (Gradient Boosting),3,0.352,0.35,0.381,0.35,0.000508
+Sun Jun 25 15:05:24 2023,Testing.. (Gradient Boosting),4,0.15,0.15,0.188,0.15,0.000399
+Sun Jun 25 15:05:24 2023,PhagePred (Multinomial Naive Bayes),0,0.273,0.233,0.378,0.233,0.000454
+Sun Jun 25 15:05:24 2023,PhagePred (Multinomial Naive Bayes),1,0.213,0.2,0.467,0.2,0.00012
+Sun Jun 25 15:05:24 2023,PhagePred (Multinomial Naive Bayes),2,0.377,0.3,0.669,0.3,0.000161
+Sun Jun 25 15:05:24 2023,PhagePred (Multinomial Naive Bayes),3,0.322,0.3,0.531,0.3,0.000175
+Sun Jun 25 15:05:24 2023,PhagePred (Multinomial Naive Bayes),4,0.308,0.225,0.731,0.225,0.000169
+Sun Jun 25 15:05:24 2023,PhANNs (FFNN),0,0.255,0.167,0.922,0.167,0.099626
+Sun Jun 25 15:05:24 2023,PhANNs (FFNN),1,0.211,0.133,0.511,0.133,0.075436
+Sun Jun 25 15:05:24 2023,PhANNs (FFNN),2,0.33,0.2,0.975,0.2,0.08636
+Sun Jun 25 15:05:24 2023,PhANNs (FFNN),3,0.289,0.225,0.725,0.225,0.075873
+Sun Jun 25 15:05:24 2023,PhANNs (FFNN),4,0.21,0.125,0.869,0.125,0.073493
+Sun Jun 25 15:05:24 2023,PVP-SVM (SVM),0,0.336,0.3,0.511,0.3,0.00139
+Sun Jun 25 15:05:24 2023,PVP-SVM (SVM),1,0.399,0.367,0.656,0.367,0.001386
+Sun Jun 25 15:05:24 2023,PVP-SVM (SVM),2,0.251,0.25,0.312,0.25,0.001488
+Sun Jun 25 15:05:24 2023,PVP-SVM (SVM),3,0.224,0.25,0.3,0.25,0.001698
+Sun Jun 25 15:05:24 2023,PVP-SVM (SVM),4,0.319,0.3,0.438,0.3,0.001756
+Sun Jun 25 18:28:44 2023,BLAST,0,0.274,0.267,0.311,0.267,0.566168
+Sun Jun 25 18:31:57 2023,BLAST,0,0.274,0.267,0.311,0.267,0.555365
+Sun Jun 25 18:31:57 2023,BLAST,1,0.39,0.333,0.533,0.333,0.655171
+Sun Jun 25 18:31:57 2023,BLAST,2,0.369,0.35,0.419,0.35,0.794978
+Sun Jun 25 18:31:57 2023,BLAST,3,0.296,0.3,0.3,0.3,0.820543
+Sun Jun 25 18:31:57 2023,BLAST,4,0.331,0.3,0.375,0.3,0.935498
+Sun Jun 25 18:31:57 2023,Ru et al. (Random Forest),0,0.283,0.267,0.356,0.267,0.008398
+Sun Jun 25 18:31:57 2023,Ru et al. (Random Forest),1,0.359,0.333,0.433,0.333,0.007954
+Sun Jun 25 18:31:57 2023,Ru et al. (Random Forest),2,0.162,0.2,0.144,0.2,0.008428
+Sun Jun 25 18:31:57 2023,Ru et al. (Random Forest),3,0.308,0.3,0.356,0.3,0.007774
+Sun Jun 25 18:31:57 2023,Ru et al. (Random Forest),4,0.219,0.2,0.25,0.2,0.007628
+Sun Jun 25 18:31:57 2023,Testing.. (Gradient Boosting),0,0.206,0.2,0.222,0.2,0.000529
+Sun Jun 25 18:31:57 2023,Testing.. (Gradient Boosting),1,0.191,0.167,0.244,0.167,0.000404
+Sun Jun 25 18:31:57 2023,Testing.. (Gradient Boosting),2,0.214,0.2,0.262,0.2,0.0005
+Sun Jun 25 18:31:57 2023,Testing.. (Gradient Boosting),3,0.353,0.35,0.388,0.35,0.000481
+Sun Jun 25 18:31:57 2023,Testing.. (Gradient Boosting),4,0.15,0.15,0.188,0.15,0.00046
+Sun Jun 25 18:31:57 2023,PhagePred (Multinomial Naive Bayes),0,0.273,0.233,0.378,0.233,0.00017
+Sun Jun 25 18:31:57 2023,PhagePred (Multinomial Naive Bayes),1,0.213,0.2,0.467,0.2,0.000116
+Sun Jun 25 18:31:57 2023,PhagePred (Multinomial Naive Bayes),2,0.377,0.3,0.669,0.3,0.000131
+Sun Jun 25 18:31:57 2023,PhagePred (Multinomial Naive Bayes),3,0.322,0.3,0.531,0.3,0.000143
+Sun Jun 25 18:31:57 2023,PhagePred (Multinomial Naive Bayes),4,0.308,0.225,0.731,0.225,0.000757
+Sun Jun 25 18:31:57 2023,PhANNs (FFNN),0,0.158,0.1,0.422,0.1,0.100973
+Sun Jun 25 18:38:13 2023,Ru et al. (Random Forest),0,0.823,0.823,0.837,0.823,0.155431
+Sun Jun 25 19:01:30 2023,BLAST,0,0.274,0.267,0.311,0.267,0.652405
+Sun Jun 25 19:01:30 2023,BLAST,1,0.39,0.333,0.533,0.333,0.670818
+Sun Jun 25 19:01:30 2023,BLAST,2,0.369,0.35,0.419,0.35,0.923227
+Sun Jun 25 19:01:30 2023,BLAST,3,0.296,0.3,0.3,0.3,1.001162
+Sun Jun 25 19:01:30 2023,BLAST,4,0.331,0.3,0.375,0.3,1.468766
+Sun Jun 25 19:01:30 2023,Ru et al. (Random Forest),0,0.334,0.333,0.356,0.333,0.013818
+Sun Jun 25 19:01:30 2023,Ru et al. (Random Forest),1,0.426,0.4,0.489,0.4,0.016039
+Sun Jun 25 19:01:30 2023,Ru et al. (Random Forest),2,0.215,0.225,0.225,0.225,0.014151
+Sun Jun 25 19:01:30 2023,Ru et al. (Random Forest),3,0.293,0.275,0.325,0.275,0.015164
+Sun Jun 25 19:01:30 2023,Ru et al. (Random Forest),4,0.263,0.25,0.3,0.25,0.014573
+Sun Jun 25 19:01:30 2023,Testing.. (Gradient Boosting),0,0.188,0.2,0.2,0.2,0.00073
+Sun Jun 25 19:01:30 2023,Testing.. (Gradient Boosting),1,0.191,0.167,0.244,0.167,0.001005
+Sun Jun 25 19:01:30 2023,Testing.. (Gradient Boosting),2,0.214,0.2,0.262,0.2,0.000708
+Sun Jun 25 19:01:30 2023,Testing.. (Gradient Boosting),3,0.352,0.35,0.381,0.35,0.000767
+Sun Jun 25 19:01:30 2023,Testing.. (Gradient Boosting),4,0.15,0.15,0.188,0.15,0.000965
+Sun Jun 25 19:01:30 2023,PhagePred (Multinomial Naive Bayes),0,0.273,0.233,0.378,0.233,0.000984
+Sun Jun 25 19:01:30 2023,PhagePred (Multinomial Naive Bayes),1,0.213,0.2,0.467,0.2,0.000391
+Sun Jun 25 19:01:30 2023,PhagePred (Multinomial Naive Bayes),2,0.377,0.3,0.669,0.3,0.000278
+Sun Jun 25 19:01:30 2023,PhagePred (Multinomial Naive Bayes),3,0.322,0.3,0.531,0.3,0.000518
+Sun Jun 25 19:01:30 2023,PhagePred (Multinomial Naive Bayes),4,0.308,0.225,0.731,0.225,0.000346
+Sun Jun 25 19:01:30 2023,PhANNs (FFNN),0,0.107,0.1,0.178,0.1,0.205159
+Sun Jun 25 19:01:30 2023,PhANNs (FFNN),1,0.234,0.167,0.978,0.167,0.157781
+Sun Jun 25 19:01:30 2023,PhANNs (FFNN),2,0.305,0.225,0.906,0.225,0.176383
+Sun Jun 25 19:01:30 2023,PhANNs (FFNN),3,0.23,0.175,0.938,0.175,0.149978
+Sun Jun 25 19:01:30 2023,PhANNs (FFNN),4,0.239,0.15,0.925,0.15,0.131644
+Sun Jun 25 19:01:30 2023,PVP-SVM (SVM),0,0.336,0.3,0.511,0.3,0.00228
+Sun Jun 25 19:01:30 2023,PVP-SVM (SVM),1,0.399,0.367,0.656,0.367,0.00243
+Sun Jun 25 19:01:30 2023,PVP-SVM (SVM),2,0.251,0.25,0.312,0.25,0.002571
+Sun Jun 25 19:01:30 2023,PVP-SVM (SVM),3,0.224,0.25,0.3,0.25,0.002937
+Sun Jun 25 19:01:30 2023,PVP-SVM (SVM),4,0.319,0.3,0.438,0.3,0.002589
+Sun Jun 25 19:02:33 2023,BLAST,0,0.274,0.267,0.311,0.267,0.638167
+Sun Jun 25 19:02:33 2023,BLAST,1,0.39,0.333,0.533,0.333,0.82002
+Sun Jun 25 19:02:33 2023,BLAST,2,0.369,0.35,0.419,0.35,1.156555
+Sun Jun 25 19:02:33 2023,BLAST,3,0.296,0.3,0.3,0.3,1.281978
+Sun Jun 25 19:02:33 2023,BLAST,4,0.331,0.3,0.375,0.3,1.646364
+Sun Jun 25 19:02:33 2023,Ru et al. (Random Forest),0,0.167,0.2,0.156,0.2,0.015695
+Sun Jun 25 19:02:33 2023,Ru et al. (Random Forest),1,0.446,0.4,0.511,0.4,0.016813
+Sun Jun 25 19:02:33 2023,Ru et al. (Random Forest),2,0.195,0.2,0.212,0.2,0.015144
+Sun Jun 25 19:02:33 2023,Ru et al. (Random Forest),3,0.342,0.35,0.388,0.35,0.016295
+Sun Jun 25 19:02:33 2023,Ru et al. (Random Forest),4,0.318,0.3,0.375,0.3,0.019385
+Sun Jun 25 19:02:33 2023,Testing.. (Gradient Boosting),0,0.198,0.2,0.222,0.2,0.000736
+Sun Jun 25 19:02:33 2023,Testing.. (Gradient Boosting),1,0.246,0.2,0.333,0.2,0.000652
+Sun Jun 25 19:02:33 2023,Testing.. (Gradient Boosting),2,0.214,0.2,0.262,0.2,0.000718
+Sun Jun 25 19:02:33 2023,Testing.. (Gradient Boosting),3,0.172,0.15,0.225,0.15,0.000684
+Sun Jun 25 19:02:33 2023,Testing.. (Gradient Boosting),4,0.15,0.15,0.188,0.15,0.000696
+Sun Jun 25 19:02:33 2023,PhagePred (Multinomial Naive Bayes),0,0.273,0.233,0.378,0.233,0.000317
+Sun Jun 25 19:02:33 2023,PhagePred (Multinomial Naive Bayes),1,0.213,0.2,0.467,0.2,0.000302
+Sun Jun 25 19:02:33 2023,PhagePred (Multinomial Naive Bayes),2,0.377,0.3,0.669,0.3,0.000314
+Sun Jun 25 19:02:33 2023,PhagePred (Multinomial Naive Bayes),3,0.322,0.3,0.531,0.3,0.000313
+Sun Jun 25 19:02:33 2023,PhagePred (Multinomial Naive Bayes),4,0.308,0.225,0.731,0.225,0.000305
+Sun Jun 25 19:02:33 2023,PhANNs (FFNN),0,0.18,0.167,0.367,0.167,0.163173
+Sun Jun 25 19:02:33 2023,PhANNs (FFNN),1,0.309,0.2,0.8,0.2,0.114327
+Sun Jun 25 19:02:33 2023,PhANNs (FFNN),2,0.233,0.2,0.619,0.2,0.119889
+Sun Jun 25 19:02:33 2023,PhANNs (FFNN),3,0.249,0.15,0.788,0.15,0.116646
+Sun Jun 25 19:02:33 2023,PhANNs (FFNN),4,0.135,0.075,0.694,0.075,0.099309
+Sun Jun 25 19:02:33 2023,PVP-SVM (SVM),0,0.336,0.3,0.511,0.3,0.001708
+Sun Jun 25 19:02:33 2023,PVP-SVM (SVM),1,0.399,0.367,0.656,0.367,0.001675
+Sun Jun 25 19:02:33 2023,PVP-SVM (SVM),2,0.251,0.25,0.312,0.25,0.002011
+Sun Jun 25 19:02:33 2023,PVP-SVM (SVM),3,0.224,0.25,0.3,0.25,0.001966
+Sun Jun 25 19:02:33 2023,PVP-SVM (SVM),4,0.319,0.3,0.438,0.3,0.002038
