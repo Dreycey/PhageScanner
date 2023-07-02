@@ -1,9 +1,9 @@
 assembler: MEGAHIT
 orffinder: PHANOTATE
 models:
-  - name: "binary PVP predictor"
-    model_path: "binary_training_output/PVP-SVM (SVM)" # local path.
-    index2class_file: "binary_training_output/index2class_name.csv" # local path.
+  - name: "PVP-SVM (SVM)"
+    model_path: "pretrained_models/PVP-SVM (SVM)" # local path.
+    index2class_file: "pretrained_models/binary_index2class_name.csv" # local path.
     model_info:
       model_name: "SVM"
       sequential: false
@@ -15,16 +15,23 @@ models:
       - name: "ATC"
       - name: "CTD"
       - name: "PCP"
-  - name: "multiclass PVP predictor"
-    model_path: "training_output/PhANNs (FFNN)" # local path.
-    index2class_file: "training_output/index2class_name.csv" # local path.
+  - name: "PhageScanner (RNN)"
+    model_path: "pretrained_models/PhageScanner (RNN)" # local path.
+    index2class_file: "pretrained_models/multiclass_index2class_name.csv" # local path.
     model_info:
-      model_name: "FFNN"
-      sequential: false
+      model_name: "RNN"
+      sequential: 2
     features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 0
-      - name: "DPC"
-        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-          gap_size: 2
+      - name: "TPC"
+  - name: "BLAST"
+    model_path: "pretrained_models/BLAST" # local path.
+    index2class_file: "pretrained_models/multiclass_index2class_name.csv" # local path.
+    model_info:
+      model_name: "BLAST"
+      sequential: false
+    feature_selection: false # Options:
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "PROTEINSEQ"

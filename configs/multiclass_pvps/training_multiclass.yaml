@@ -23,7 +23,7 @@ models:
       sequential: false
     features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
       - name: "SEQUENTIALONEHOT"
-  - name: "Baseline Classifier (Logistic Regression)"
+  - name: "Baseline Model - Logistic Regression"
     model_info:
       model_name: "LOGREG"
       sequential: false
@@ -43,12 +43,12 @@ models:
   - name: "PhageScanner (RNN)"
     model_info:
       model_name: "RNN"
-      sequential: 5
+      sequential: 2
     features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-      - name: "AAC"
-      - name: "ATC"
-      - name: "CTD"
-      - name: "PCP"
+      - name: "DPC"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          gap_size: 0
+      - name: "TPC"
 classes:
   - name: MajorCapsid # No spaces. Can differ between pipelines.
     final_csv: "benchmarking_database/benchmarking_MajorCapsid.csv" # local path.
@@ -70,3 +70,5 @@ classes:
     final_csv: "benchmarking_database/benchmarking_shaft.csv"
   - name: HTJ
     final_csv: "benchmarking_database/benchmarking_HTJ.csv"
+  - name: Other
+    final_csv: "benchmarking_database/BINARY_non-PVP.csv"

@@ -43,7 +43,7 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 0
-  - name: "PhageScanner (baseline - logistic regression)"
+  - name: "Baseline Model - Logistic Regression"
     model_info:
       model_name: "LOGREG"
       sequential: false
@@ -55,12 +55,12 @@ models:
   - name: "PhageScanner (RNN)"
     model_info:
       model_name: "RNN"
-      sequential: 5
+      sequential: 2
     features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-      - name: "AAC"
-      - name: "ATC"
-      - name: "CTD"
-      - name: "PCP"
+      - name: "DPC"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          gap_size: 0
+      - name: "TPC"
   - name: "DeePVP (CNN)"
     model_info:
       model_name: "CNN"

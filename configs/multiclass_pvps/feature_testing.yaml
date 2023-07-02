@@ -90,3 +90,5 @@ classes:
     final_csv: "benchmarking_database/benchmarking_shaft.csv"
   - name: HTJ
     final_csv: "benchmarking_database/benchmarking_HTJ.csv"
+  - name: Other
+    final_csv: "benchmarking_database/BINARY_non-PVP.csv"
