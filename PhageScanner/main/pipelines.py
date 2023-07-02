@@ -261,7 +261,7 @@ class DatabasePipeline(Pipeline):
                 file_path=db_count_csv,
             )
 
-    def partition_proteins(self, k_partitions=5):
+    def partition_proteins(self, k_partitions=5, get_cluster_sizes=False):
         """Partion the proteins.
 
         Description:
@@ -301,6 +301,21 @@ class DatabasePipeline(Pipeline):
             # randomize the clusters
             randomized_clusters = list(cluster_graph.keys())
             np.random.shuffle(randomized_clusters)
+
+            # save cluster sizes to csv
+            if get_cluster_sizes:
+                cluster_count_csv = self.directory / "cluster_sizes.csv"
+                temp_cluster_count = {
+                    "datetime": self.pipeline_start_time,
+                    "class_name": class_name,
+                    "cluster_count": len(cluster_graph.keys()),
+                    "cluster_sizes": '\t'.join([str(len(cluster)) for cluster in cluster_graph.values()])
+                }
+                CSVUtils.appendcsv(
+                    data_dict=[temp_cluster_count],
+                    fieldnames=temp_cluster_count.keys(),
+                    file_path=cluster_count_csv,
+                )
 
             # obtain a dictionary of protein -> partition
             protein2partition = {}
@@ -538,6 +553,7 @@ class TrainingPipeline(Pipeline):
             "recall",
             "execution_time_seconds",
             "features",
+            "dataset_size",
         ]
 
         # obtain a list of features and parameters.

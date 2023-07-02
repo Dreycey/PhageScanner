@@ -59,7 +59,12 @@ class CommandLineUtils:
         output, error = process.communicate()
 
         # NOTE: ignoring errors from phanotate since it throws errors without tscan
-        if len(error) > 0 and not command.startswith("phanotate.py"):
+        # NOTE: ignoring errors from megahit since it throws errors even on success.
+        if (
+            len(error) > 0
+            and not command.startswith("phanotate.py")
+            and not command.startswith("megahit")
+        ):
             error_message = "There was an error executing a shell command.\n"
             error_message += f"The error was: \n\n{error}\n\n"
             error_message += f"The command was: \n\n{command}\n\n"
@@ -268,7 +273,7 @@ class PredictionConfig(ConfigUtils):
                 if m["model_info"]["sequential"]:
                     return m["model_info"]["sequential"]
         return False
-    
+
     def get_model_path(self, model_name):
         """Get the model path from the model name."""
         for m in self.config["models"]:
@@ -332,6 +337,11 @@ class CSVUtils:
             while f.readline() is not None:
                 lines += 1
         return lines
+
+    @staticmethod
+    def csv_to_dataframe(csv_file: Path):
+        """Convert a CSV file to a dataframe."""
+        return pd.read_csv(csv_file, sep=",")
 
     @staticmethod
     def appendcsv(
