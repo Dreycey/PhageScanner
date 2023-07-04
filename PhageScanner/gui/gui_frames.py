@@ -281,6 +281,17 @@ class SequenceFrame(tk.Frame):
             self.prediction_df["accession"] == current_accesion
         ]
 
+        # check if accession isn't found
+        if len(accession_df) == 0:
+            accession_set = self.prediction_df["accession"].unique()
+            message = f"Accession wasn't found.. {current_accesion}. \n\n"
+            message += f"Accessions: {accession_set}"
+            self.text_area.delete("1.0", "end")  # clear existing text
+            self.text_area.insert(
+                "1.0", message
+            )  # insert the combined text
+            return None
+        
         # select for proteins between start and end
         accession_df = accession_df[accession_df["start_pos"] >= int(start_text)]
         accession_df = accession_df[accession_df["stop_pos"] <= int(end_text)]

@@ -432,13 +432,9 @@ class ChemFeatureExtractor(PCPExtractor):
             is_large,  # 11. large
             analysis.molecular_weight(),  # 12. peptide mass
             analysis.isoelectric_point(),  # 13. isoelectric point
-            # analysis.instability_index(), # 14. instability index
-            # analysis.flexibility(), # 15. Flexibility
-            # analysis.gravy(), # 16. Gravy index
-            helix,  # 17. Helix frequency
-            turn,  # 18. Turn frequency
-            sheet,  # 19. Betasheet frequency
-            # analysis.molar_extinction_coefficient(), # 20. Molar extinction
+            helix,  # 14. Helix frequency
+            turn,  # 15. Turn frequency
+            sheet,  # 16. Betasheet frequency
         ]
         return bio_features
 

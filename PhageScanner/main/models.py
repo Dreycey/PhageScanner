@@ -351,7 +351,7 @@ class RNNMultiClassifier(KerasModel):
 
         # Add an LSTM layer
         model.add(
-            LSTM(100, input_shape=(row_length, column_length), return_sequences=False)
+            LSTM(50, input_shape=(row_length, column_length), return_sequences=False)
         )
 
         # add FF layers
@@ -490,7 +490,7 @@ class BlastClassifier(BLASTWrapper, Model):
             The only thing this really does is tell
             blast where the database is located.
         """
-        model_obj = cls(database_path=file_path / "BLAST_DB")
+        model_obj = cls(database_path=Path(file_path) / "BLAST_DB")
         return model_obj
 
     def train(self, train_x: List[str], train_y: List[int]):
