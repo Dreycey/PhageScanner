@@ -19,7 +19,7 @@ from dna_features_viewer import GraphicFeature, GraphicRecord
 from tqdm import tqdm
 
 from PhageScanner.main.exceptions import PipelineExceptionError
-from PhageScanner.main.utils import CSVUtils, FastaUtils
+from PhageScanner.main.utils import CSVUtils
 
 
 def get_feature_names(dataframe: pd.DataFrame):
@@ -143,9 +143,7 @@ def create_genome_figure(
     plt.close(ax.figure)
 
 
-def create_genome_images(
-    path_to_predictions: Path, output_path: Path
-):
+def create_genome_images(path_to_predictions: Path, output_path: Path):
     """Create images with features for each assembly/genome.
 
     Description:
@@ -176,13 +174,13 @@ def create_genome_images(
     for accession in tqdm(accession_list):
         # for name, sequence in FastaUtils.get_proteins(path_to_assemblies):
         #     if name == accession:
-                # get the dataframe for the accession.
+        # get the dataframe for the accession.
         accession_df = prediction_result_df[
             prediction_result_df["accession"] == accession
         ]
 
         # get the sequence length.
-        sequence_length = accession_df['length'].max()
+        sequence_length = accession_df["length"].max()
 
         # get feature column names.
         feature_column_names = get_feature_names(accession_df)

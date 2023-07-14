@@ -20,6 +20,7 @@ from typing import List
 
 import joblib
 import numpy as np
+from keras.callbacks import EarlyStopping
 from keras.layers import (
     LSTM,
     BatchNormalization,
@@ -32,7 +33,6 @@ from keras.layers import (
 from keras.models import Sequential, load_model
 from keras.optimizers import Adam
 from keras.regularizers import l1
-from keras.callbacks import EarlyStopping
 
 # scikit-learn
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
@@ -169,7 +169,7 @@ class Model(ABC):
             ),
             "recall": np.round(recall_score(predictions, test_y, average=None), 3),
             "execution_time_seconds": round(execution_time, 6),
-            "dataset_size": dataset_length
+            "dataset_size": dataset_length,
         }
 
         return result_dictionary
@@ -327,9 +327,19 @@ class FFNNMultiClassModel(KerasModel):
                 number_of_classes=max(train_y) + 1,
             )
 
-        # set up early stopping criterion. If training doesn't improve after 2 batches, finish.
-        early_stopping = EarlyStopping(monitor='loss', mode='min', min_delta=0.01, patience=10)
-        self.model.fit(train_x, train_y, epochs=300, callbacks=[early_stopping], batch_size=32, verbose=1)
+        # set up early stopping criterion. If training doesn't 
+        # improve after 2 batches, finish.
+        early_stopping = EarlyStopping(
+            monitor="loss", mode="min", min_delta=0.01, patience=10
+        )
+        self.model.fit(
+            train_x,
+            train_y,
+            epochs=300,
+            callbacks=[early_stopping],
+            batch_size=32,
+            verbose=1,
+        )
 
 
 class RNNMultiClassifier(KerasModel):
@@ -379,9 +389,19 @@ class RNNMultiClassifier(KerasModel):
                 number_of_classes=max(train_y) + 1,
             )
 
-        # set up early stopping criterion. If training doesn't improve after 2 batches, finish.
-        early_stopping = EarlyStopping(monitor='loss', mode='min', min_delta=0.01, patience=2)
-        self.model.fit(train_x, train_y, epochs=300, callbacks=[early_stopping], batch_size=32, verbose=1)
+        # set up early stopping criterion. If training doesn't 
+        # improve after 2 batches, finish.
+        early_stopping = EarlyStopping(
+            monitor="loss", mode="min", min_delta=0.01, patience=2
+        )
+        self.model.fit(
+            train_x,
+            train_y,
+            epochs=300,
+            callbacks=[early_stopping],
+            batch_size=32,
+            verbose=1,
+        )
 
 
 class CNNMultiClassifier(KerasModel):
@@ -437,9 +457,19 @@ class CNNMultiClassifier(KerasModel):
                 number_of_classes=max(train_y) + 1,
             )
 
-        # set up early stopping criterion. If training doesn't improve after 2 batches, finish.
-        early_stopping = EarlyStopping(monitor='loss', mode='min', min_delta=0.01, patience=2)
-        self.model.fit(train_x, train_y, epochs=300, callbacks=[early_stopping], batch_size=32, verbose=1)
+        # set up early stopping criterion. If training 
+        # doesn't improve after 2 batches, finish.
+        early_stopping = EarlyStopping(
+            monitor="loss", mode="min", min_delta=0.01, patience=2
+        )
+        self.model.fit(
+            train_x,
+            train_y,
+            epochs=300,
+            callbacks=[early_stopping],
+            batch_size=32,
+            verbose=1,
+        )
 
 
 class BlastClassifier(BLASTWrapper, Model):

@@ -309,7 +309,9 @@ class DatabasePipeline(Pipeline):
                     "datetime": self.pipeline_start_time,
                     "class_name": class_name,
                     "cluster_count": len(cluster_graph.keys()),
-                    "cluster_sizes": '\t'.join([str(len(cluster)) for cluster in cluster_graph.values()])
+                    "cluster_sizes": "\t".join(
+                        [str(len(cluster)) for cluster in cluster_graph.values()]
+                    ),
                 }
                 CSVUtils.appendcsv(
                     data_dict=[temp_cluster_count],
