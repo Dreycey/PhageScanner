@@ -1,0 +1,11 @@
+datetime,model,kfold_iteration,accuracy,f1score,precision,recall,execution_time_seconds,features,dataset_size
+Tue Jul  4 19:09:54 2023,Baseline Model - Logistic Regression,0,0.872,0.868	0.876,0.842	0.903,0.897	0.851,0.004026,AAC	ATC	CTD	PCP,13360
+Tue Jul  4 19:09:54 2023,Baseline Model - Logistic Regression,1,0.836,0.842	0.83,0.875	0.798,0.812	0.864,0.004659,AAC	ATC	CTD	PCP,19716
+Tue Jul  4 19:09:54 2023,Baseline Model - Logistic Regression,2,0.88,0.879	0.88,0.875	0.884,0.883	0.876,0.002812,AAC	ATC	CTD	PCP,16720
+Tue Jul  4 19:09:54 2023,Baseline Model - Logistic Regression,3,0.844,0.84	0.848,0.817	0.871,0.864	0.826,0.002914,AAC	ATC	CTD	PCP,12014
+Tue Jul  4 19:09:54 2023,Baseline Model - Logistic Regression,4,0.798,0.811	0.783,0.866	0.729,0.762	0.845,0.004328,AAC	ATC	CTD	PCP,21126
+Tue Jul  4 19:09:54 2023,PhageScanner (RNN),0,0.982,0.982	0.982,0.985	0.979,0.979	0.985,52.229715,DPC (gap_size=0),13360
+Tue Jul  4 19:09:54 2023,PhageScanner (RNN),1,0.981,0.981	0.981,0.976	0.986,0.986	0.977,2.435957,DPC (gap_size=0),19716
+Tue Jul  4 19:09:54 2023,PhageScanner (RNN),2,0.98,0.98	0.98,0.979	0.981,0.981	0.979,2.993314,DPC (gap_size=0),16720
+Tue Jul  4 19:09:54 2023,PhageScanner (RNN),3,0.982,0.982	0.982,0.977	0.987,0.986	0.977,1.40793,DPC (gap_size=0),12014
+Tue Jul  4 19:09:54 2023,PhageScanner (RNN),4,0.953,0.955	0.952,0.986	0.92,0.925	0.985,3.670178,DPC (gap_size=0),21126
