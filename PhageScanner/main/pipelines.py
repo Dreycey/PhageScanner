@@ -111,22 +111,29 @@ class DatabasePipeline(Pipeline):
         self.pipeline_name = pipeline_name
         self.directory = directory
 
-        # The following extension is used for clustered proteins.
-        self.cluster_extension = "_clustered"
+        # threshold for removing duplicates
+        self.threshold_deduplication = 0.95
 
         # create directory if it doesn't exist
         if not os.path.exists(self.directory):
             os.mkdir(self.directory)
 
-    def get_fasta_path(self, class_name):
-        """Get the fasta path for proteins before clustering."""
-        path = self.directory / (self.pipeline_name + "_" + class_name + ".fasta")
-        return path
+    def get_fasta_path(self, class_name, identity=None):
+        """Get the fasta path for proteins before clustering.
+        
+        Description:
+            This obtains the fasta path for the fasta file.
 
-    def get_clustered_fasta_path(self, class_name):
-        """Get the fasta path for proteins after clustering."""
-        full = self.pipeline_name + "_" + class_name + self.cluster_extension
-        path = self.directory / full
+        NOTE:
+            If identity is set, this obtains fasta files that
+            have been clustered at that particular identity
+            threshold.
+        """
+        identity_str = ""
+        if identity:
+            identity = int(100*identity)
+            identity_str = f"_{identity}"
+        path = self.directory / (self.pipeline_name + "_" + class_name + f"{identity_str}" + ".fasta")
         return path
 
     def get_partition_csv_path(self, class_name):
@@ -188,7 +195,7 @@ class DatabasePipeline(Pipeline):
                             count += batch.count(">")
                         else:
                             logging.warning(
-                                f"Empt Batch! DB: {database_name}, query: {query}"
+                                f"Empty Batch! DB: {database_name}, query: {query}"
                             )
 
                     # report the count
@@ -211,48 +218,44 @@ class DatabasePipeline(Pipeline):
                         file_path=db_count_csv,
                     )
 
-    def cluster_proteins(self):
+    def cluster_proteins(self, clustering_identity_threshold, input_identity_threshold=None):
         """Cluster each class of proteins.
 
         Description:
             This method clusters all proteins pertaining to each
-            class.
+            class. Steps are:
+                1. Get the clustering tool wrapper.
+                2. Find all fasta files (should corresponding to each class).
+                3. Cluster the proteins in each fasta file.
+                4. Save information to CSV file.
         """
         clustering_tool = self.config_object.get_clustering_tool()
         clustering_adapter = ClusteringWrapperNames.get_clustering_tool(clustering_tool)
-        # for each class fasta file, cluster the proteins.
-        for filename in os.listdir(self.directory):
-            if self.cluster_extension in filename or ".fasta" not in filename:
-                continue
-            class_fasta_file = os.path.join(self.directory, filename)
-            class_clstr_file = os.path.join(
-                self.directory, utils.get_filename(filename) + self.cluster_extension
-            )
 
-            # if the file already exists, then go to next class.
-            if os.path.isfile(class_clstr_file):
-                logging.warning(
-                    f"(Skip) These have already been clustered: {class_clstr_file}"
-                )
-                continue
-            else:
-                logging.info(f"Clustering proteins in {filename}")
+        # for each class fasta file, cluster the proteins.
+        for class_info in self.config_object.get_classes():
+            class_name = class_info.get("name")  # TODO: move to config_object
+            logging.info(f"\t Clustering the class: {class_name}")
+
+            # get path to proteins before and after clustering.
+            input_file_path = self.get_fasta_path(class_name, identity=input_identity_threshold)
+            output_file_path = self.get_fasta_path(class_name, identity=clustering_identity_threshold)
 
             # cluster proteins.
             clustering_adapter.cluster(
-                fasta_file=class_fasta_file,
-                outpath=class_clstr_file,
-                identity=self.config_object.get_clustering_threshold(),
+                fasta_file=input_file_path,
+                outpath=output_file_path,
+                identity=clustering_identity_threshold,
             )
 
             # save count to csv.
             db_count_csv = self.directory / "result_cluster_ouput.csv"
             temp_db_count = {
                 "datetime": self.pipeline_start_time,
-                "class_name": filename.split("_")[1].replace(".fasta", ""),
-                "clustering_threshold": self.config_object.get_clustering_threshold(),
+                "class_name": class_name,
+                "clustering_threshold": clustering_identity_threshold,
                 "cluster_count": FastaUtils.count_entries_in_fasta(
-                    fasta_file=class_clstr_file
+                    fasta_file=output_file_path
                 ),
             }
             CSVUtils.appendcsv(
@@ -261,7 +264,7 @@ class DatabasePipeline(Pipeline):
                 file_path=db_count_csv,
             )
 
-    def partition_proteins(self, k_partitions=5, get_cluster_sizes=False):
+    def partition_proteins(self, clustering_identity_threshold, k_partitions=5, get_cluster_sizes=False):
         """Partion the proteins.
 
         Description:
@@ -285,8 +288,8 @@ class DatabasePipeline(Pipeline):
             logging.info(f"\t Partitioning class: {class_name}")
 
             # get path to proteins before and after clustering.
-            fasta_non_clustered = self.get_fasta_path(class_name)
-            fasta_clustered = self.get_clustered_fasta_path(class_name)
+            fasta_non_clustered = self.get_fasta_path(class_name, identity=self.threshold_deduplication)
+            fasta_clustered = self.get_fasta_path(class_name, identity=clustering_identity_threshold)
 
             # get clustering tool
             clustering_tool = self.config_object.get_clustering_tool()
@@ -336,7 +339,7 @@ class DatabasePipeline(Pipeline):
             with open(output_file, "w") as output_csv:
                 output_csv.write("partition,accession,protein,protein_length\n")
                 for accession, protein in FastaUtils.get_proteins(fasta_non_clustered):
-                    if accession[:19] in protein2partition:
+                    if accession[:19] in protein2partition: # NOTE: TODO: CDHIT cuts names at 19 ch
                         partition = protein2partition[accession[:19]]
                         output_csv.write(
                             f"{partition},{accession},{protein},{len(protein)}\n"
@@ -359,15 +362,21 @@ class DatabasePipeline(Pipeline):
         self.get_proteins_from_db_adapters()
         logging.info("Step 1 (Finished) - Obtaining proteins from APIs...")
 
-        # Step 2: cluster proteins at the predifined clustering threshold.
-        logging.info("Step 2 - Cluster the proteins...")
-        self.cluster_proteins()
-        logging.info("Step 2 (Finished) - Cluster the proteins...")
+        # Step 2: cluster proteins to remove duplicates.
+        logging.info("Step 2 - Removing duplicates...")
+        self.cluster_proteins(clustering_identity_threshold=self.threshold_deduplication)
+        logging.info("Step 2 (Finished) - Removing duplicates...")
 
-        # Step 3: create k-fold partitioned clusters
-        logging.info("Step 3 - Create k-fold partitions...")
-        self.partition_proteins()
-        logging.info("Step 3 (Finished) - Create k-fold partitions...")
+        # Step 3: cluster proteins at the predifined clustering threshold.
+        logging.info("Step 3 - Cluster the proteins...")
+        self.cluster_proteins(clustering_identity_threshold=self.config_object.get_clustering_threshold(),
+                              input_identity_threshold=self.threshold_deduplication)
+        logging.info("Step 3 (Finished) - Cluster the proteins...")
+
+        # Step 4: create k-fold partitioned clusters.
+        logging.info("Step 4 - Create k-fold partitions...")
+        self.partition_proteins(clustering_identity_threshold=self.config_object.get_clustering_threshold())
+        logging.info("Step 4 (Finished) - Create k-fold partitions...")
 
 
 class TrainingPipeline(Pipeline):
