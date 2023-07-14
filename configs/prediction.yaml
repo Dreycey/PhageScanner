@@ -1,31 +1,31 @@
 assembler: MEGAHIT
 orffinder: PHANOTATE
 models:
-  - name: "PVP-SVM (SVM)"
-    model_path: "pretrained_models/PVP-SVM (SVM)" # local path.
-    index2class_file: "pretrained_models/binary_index2class_name.csv" # local path.
-    model_info:
-      model_name: "SVM"
-      sequential: false
-    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-      - name: "DPC"
-        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-          gap_size: 0
-      - name: "AAC"
-      - name: "ATC"
-      - name: "CTD"
-      - name: "PCP"
-  - name: "PhageScanner (RNN)"
-    model_path: "pretrained_models/PhageScanner (RNN)" # local path.
-    index2class_file: "pretrained_models/multiclass_index2class_name.csv" # local path.
-    model_info:
-      model_name: "RNN"
-      sequential: 2
-    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-      - name: "DPC"
-        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-          gap_size: 0
-      - name: "TPC"
+  # - name: "PVP-SVM (SVM)"
+  #   model_path: "pretrained_models/PVP-SVM (SVM)" # local path.
+  #   index2class_file: "pretrained_models/binary_index2class_name.csv" # local path.
+  #   model_info:
+  #     model_name: "SVM"
+  #     sequential: false
+  #   features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+  #     - name: "DPC"
+  #       parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+  #         gap_size: 0
+  #     - name: "AAC"
+  #     - name: "ATC"
+  #     - name: "CTD"
+  #     - name: "PCP"
+  # - name: "PhageScanner (RNN)"
+  #   model_path: "pretrained_models/PhageScanner (RNN)" # local path.
+  #   index2class_file: "pretrained_models/multiclass_index2class_name.csv" # local path.
+  #   model_info:
+  #     model_name: "RNN"
+  #     sequential: 2
+  #   features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+  #     - name: "DPC"
+  #       parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+  #         gap_size: 0
+  #     - name: "TPC"
   - name: "BLAST"
     model_path: "pretrained_models/BLAST" # local path.
     index2class_file: "pretrained_models/multiclass_index2class_name.csv" # local path.
@@ -35,3 +35,13 @@ models:
     feature_selection: false # Options:
     features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
       - name: "PROTEINSEQ"
+  - name: "Lysin Detector"
+    model_path: "pretrained_models/Lysin_PhageScanner (RNN)" # local path.
+    index2class_file: "pretrained_models/lysin_index2class_name.csv" # local path.
+    model_info:
+      model_name: "RNN"
+      sequential: 3
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "DPC"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          gap_size: 0

@@ -1,0 +1,10 @@
+clustering:
+  name: cdhit
+  clustering-percentage: 90
+classes:
+  - name: Lysin
+    uniprot: "endolysin"
+    entrez: "endolysin[Title]"
+  - name: non-Lysin
+    uniprot: "cc_subcellular_location: virion NOT endolysin"
+    entrez: "bacteriophage[Organism]"
