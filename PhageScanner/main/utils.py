@@ -161,6 +161,9 @@ class DatabaseConfig(ConfigUtils):
         """Get the clustering identity threshold"""
         return self.config["clustering"]["clustering-percentage"] / 100
 
+    def get_k_partition_count(self) -> int:
+        """Get the number of partitions to use for k-fold CV."""
+        return self.config["clustering"]["k_partitions"]
 
 class TrainingConfig(ConfigUtils):
     """The training pipeline configuration object.

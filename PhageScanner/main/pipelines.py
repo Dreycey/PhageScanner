@@ -285,7 +285,7 @@ class DatabasePipeline(Pipeline):
         """
         for class_info in self.config_object.get_classes():
             class_name = class_info.get("name")  # TODO: move to config_object
-            logging.info(f"\t Partitioning class: {class_name}")
+            logging.info(f"\t Partitioning class {k_partitions}-fold: {class_name}")
 
             # get path to proteins before and after clustering.
             fasta_non_clustered = self.get_fasta_path(class_name, identity=self.threshold_deduplication)
@@ -375,7 +375,8 @@ class DatabasePipeline(Pipeline):
 
         # Step 4: create k-fold partitioned clusters.
         logging.info("Step 4 - Create k-fold partitions...")
-        self.partition_proteins(clustering_identity_threshold=self.config_object.get_clustering_threshold())
+        self.partition_proteins(clustering_identity_threshold=self.config_object.get_clustering_threshold(),
+                                k_partitions=self.config_object.get_k_partition_count())
         logging.info("Step 4 (Finished) - Create k-fold partitions...")
 
 
