@@ -116,7 +116,7 @@ class DatabasePipeline(Pipeline):
 
     def get_fasta_path(self, class_name, identity=None):
         """Get the fasta path for proteins before clustering.
-        
+
         Description:
             This obtains the fasta path for the fasta file.
 
@@ -127,9 +127,11 @@ class DatabasePipeline(Pipeline):
         """
         identity_str = ""
         if identity:
-            identity = int(100*identity)
+            identity = int(100 * identity)
             identity_str = f"_{identity}"
-        path = self.directory / (self.pipeline_name + "_" + class_name + f"{identity_str}" + ".fasta")
+        path = self.directory / (
+            self.pipeline_name + "_" + class_name + f"{identity_str}" + ".fasta"
+        )
         return path
 
     def get_partition_csv_path(self, class_name):
@@ -214,7 +216,9 @@ class DatabasePipeline(Pipeline):
                         file_path=db_count_csv,
                     )
 
-    def cluster_proteins(self, clustering_identity_threshold, input_identity_threshold=None):
+    def cluster_proteins(
+        self, clustering_identity_threshold, input_identity_threshold=None
+    ):
         """Cluster each class of proteins.
 
         Description:
@@ -234,8 +238,12 @@ class DatabasePipeline(Pipeline):
             logging.info(f"\t Clustering the class: {class_name}")
 
             # get path to proteins before and after clustering.
-            input_file_path = self.get_fasta_path(class_name, identity=input_identity_threshold)
-            output_file_path = self.get_fasta_path(class_name, identity=clustering_identity_threshold)
+            input_file_path = self.get_fasta_path(
+                class_name, identity=input_identity_threshold
+            )
+            output_file_path = self.get_fasta_path(
+                class_name, identity=clustering_identity_threshold
+            )
 
             # cluster proteins.
             clustering_adapter.cluster(
@@ -260,7 +268,9 @@ class DatabasePipeline(Pipeline):
                 file_path=db_count_csv,
             )
 
-    def partition_proteins(self, clustering_identity_threshold, k_partitions=5, get_cluster_sizes=False):
+    def partition_proteins(
+        self, clustering_identity_threshold, k_partitions=5, get_cluster_sizes=False
+    ):
         """Partion the proteins.
 
         Description:
@@ -284,8 +294,12 @@ class DatabasePipeline(Pipeline):
             logging.info(f"\t Partitioning class {k_partitions}-fold: {class_name}")
 
             # get path to proteins before and after clustering.
-            fasta_non_clustered = self.get_fasta_path(class_name, identity=self.config_object.get_deduplication_threshold())
-            fasta_clustered = self.get_fasta_path(class_name, identity=clustering_identity_threshold)
+            fasta_non_clustered = self.get_fasta_path(
+                class_name, identity=self.config_object.get_deduplication_threshold()
+            )
+            fasta_clustered = self.get_fasta_path(
+                class_name, identity=clustering_identity_threshold
+            )
 
             # get clustering tool
             clustering_tool = self.config_object.get_clustering_tool()
@@ -335,7 +349,9 @@ class DatabasePipeline(Pipeline):
             with open(output_file, "w") as output_csv:
                 output_csv.write("partition,accession,protein,protein_length\n")
                 for accession, protein in FastaUtils.get_proteins(fasta_non_clustered):
-                    if accession[:19] in protein2partition: # NOTE: TODO: CDHIT cuts names at 19 ch
+                    if (
+                        accession[:19] in protein2partition
+                    ):  # NOTE: TODO: CDHIT cuts names at 19 ch
                         partition = protein2partition[accession[:19]]
                         output_csv.write(
                             f"{partition},{accession},{protein},{len(protein)}\n"
@@ -353,6 +369,9 @@ class DatabasePipeline(Pipeline):
             creating a new set of unique proteins
             using different input database adapters.
         """
+        # config variables
+        deduplication_threshold = self.config_object.get_deduplication_threshold()
+
         # Step 1: get proteins using database adapters.
         logging.info("Step 1 - Obtaining proteins from APIs...")
         self.get_proteins_from_db_adapters()
@@ -360,19 +379,23 @@ class DatabasePipeline(Pipeline):
 
         # Step 2: cluster proteins to remove duplicates.
         logging.info("Step 2 - Removing duplicates...")
-        self.cluster_proteins(clustering_identity_threshold=self.config_object.get_deduplication_threshold())
+        self.cluster_proteins(clustering_identity_threshold=deduplication_threshold)
         logging.info("Step 2 (Finished) - Removing duplicates...")
 
         # Step 3: cluster proteins at the predifined clustering threshold.
         logging.info("Step 3 - Cluster the proteins...")
-        self.cluster_proteins(clustering_identity_threshold=self.config_object.get_clustering_threshold(),
-                              input_identity_threshold=self.config_object.get_deduplication_threshold())
+        self.cluster_proteins(
+            clustering_identity_threshold=self.config_object.get_clustering_threshold(),
+            input_identity_threshold=deduplication_threshold,
+        )
         logging.info("Step 3 (Finished) - Cluster the proteins...")
 
         # Step 4: create k-fold partitioned clusters.
         logging.info("Step 4 - Create k-fold partitions...")
-        self.partition_proteins(clustering_identity_threshold=self.config_object.get_clustering_threshold(),
-                                k_partitions=self.config_object.get_k_partition_count())
+        self.partition_proteins(
+            clustering_identity_threshold=self.config_object.get_clustering_threshold(),
+            k_partitions=self.config_object.get_k_partition_count(),
+        )
         logging.info("Step 4 (Finished) - Create k-fold partitions...")
 
 
@@ -454,11 +477,11 @@ class TrainingPipeline(Pipeline):
 
     def balance_partitions(self):
         """Balance classes  within each partition.
-        
+
         Description:
-            Here we upsample the smaller classes with replacement. The 
-            justification is that there may be large negative classes, 
-            for example non-pvp, that contain more unique proteins. For the 
+            Here we upsample the smaller classes with replacement. The
+            justification is that there may be large negative classes,
+            for example non-pvp, that contain more unique proteins. For the
             models to learn these, we don't want to downsample. Likewise, if
             there are really small classes, then the models would lose context
             on other potential proteins within the other classes.
@@ -475,7 +498,9 @@ class TrainingPipeline(Pipeline):
             balanced_partition_df_list = []
             for class_index in partition_df["class"].unique():
                 # get proteins corresponding to the  class index.
-                class_df: pd.DataFrame = partition_df[partition_df["class"] == class_index]
+                class_df: pd.DataFrame = partition_df[
+                    partition_df["class"] == class_index
+                ]
 
                 # add to balanced_partition_df_list
                 balanced_partition_df_list.append(class_df)
@@ -483,19 +508,18 @@ class TrainingPipeline(Pipeline):
                 # get differrence from the max class size, then upsample w/ replacement
                 size_difference = max_class_size - len(class_df)
                 if size_difference > 0:
-                    balanced_class_df = class_df.sample(n=size_difference, 
-                                                        random_state=1, 
-                                                        replace=True)
+                    balanced_class_df = class_df.sample(
+                        n=size_difference, random_state=1, replace=True
+                    )
                     balanced_partition_df_list.append(balanced_class_df)
 
             # combine balanced classes for this partition.
-            balanced_partition_df = pd.concat(balanced_partition_df_list, 
-                                              ignore_index=True)
-            
-            # ensure the min class size is now the same as max.
-            assert max_class_size == min(
-                balanced_partition_df["class"].value_counts()
+            balanced_partition_df = pd.concat(
+                balanced_partition_df_list, ignore_index=True
             )
+
+            # ensure the min class size is now the same as max.
+            assert max_class_size == min(balanced_partition_df["class"].value_counts())
 
             # add balanced partition to new_balanced_partitions_df.
             new_balanced_partitions_df.append(balanced_partition_df)
@@ -870,9 +894,12 @@ class PredictionPipeline(Pipeline):
             # use probabilities threshold.
             if len(probabilities) == len(predictions):
                 probabilities_series = pd.Series(probabilities)
-                self.dataframe[model].mask(probabilities_series < self.config_object.get_probability_threshold(), 
-                                           "No prediction", 
-                                           inplace=True)
+                self.dataframe[model].mask(
+                    probabilities_series
+                    < self.config_object.get_probability_threshold(),
+                    "No prediction",
+                    inplace=True,
+                )
 
             # replace values with class names.
             self.dataframe[model].replace(index2class, inplace=True)

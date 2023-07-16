@@ -95,9 +95,7 @@ class ModelNames(Enum):
 
         if adapter is None:
             tools_available = ",".join(name2adapter.keys())
-            exception_string = (
-                "The model requested in the Yaml File is not available. "
-            )
+            exception_string = "The model requested in the Yaml File is not available. "
             exception_string += f"The requested model in the Yaml is: {name}. "
             exception_string += f"The options available are: {tools_available}"
             raise IncorrectYamlError(exception_string)
@@ -245,7 +243,9 @@ class SVCMultiClassModel(ScikitModel):
 
     def __init__(self):
         """Instantiate a new SVCMultiClassModel."""
-        self.model = make_pipeline(StandardScaler(), SVC(random_state=0, tol=1e-5, probability=True))
+        self.model = make_pipeline(
+            StandardScaler(), SVC(random_state=0, tol=1e-5, probability=True)
+        )
 
 
 class MultiNaiveBayesClassModel(ScikitModel):
@@ -333,7 +333,7 @@ class FFNNMultiClassModel(KerasModel):
                 number_of_classes=max(train_y) + 1,
             )
 
-        # set up early stopping criterion. If training doesn't 
+        # set up early stopping criterion. If training doesn't
         # improve after 2 batches, finish.
         early_stopping = EarlyStopping(
             monitor="loss", mode="min", min_delta=0.01, patience=10
@@ -395,7 +395,7 @@ class RNNMultiClassifier(KerasModel):
                 number_of_classes=max(train_y) + 1,
             )
 
-        # set up early stopping criterion. If training doesn't 
+        # set up early stopping criterion. If training doesn't
         # improve after 2 batches, finish.
         early_stopping = EarlyStopping(
             monitor="loss", mode="min", min_delta=0.01, patience=2
@@ -463,7 +463,7 @@ class CNNMultiClassifier(KerasModel):
                 number_of_classes=max(train_y) + 1,
             )
 
-        # set up early stopping criterion. If training 
+        # set up early stopping criterion. If training
         # doesn't improve after 2 batches, finish.
         early_stopping = EarlyStopping(
             monitor="loss", mode="min", min_delta=0.01, patience=2
