@@ -1,0 +1,32 @@
+clustering:
+  name: cdhit
+  deduplication-threshold: 100
+  clustering-percentage: 95
+  k_partitions: 5 # number of partitions in k-fold cross validation
+classes:
+  - name: KnownToxin
+    uniprot: '(bacteriophage AND reviewed: true AND ((go:0090729)) OR ("Cholera toxin" AND CTX) OR ("exotoxin C" AND (go:0090729)) OR ("exotoxin A" AND "(SpeA)" AND (go:0090729)) OR ("Verotoxin" OR "shiga-like toxin" AND (go:0090729)) OR ("Botulinum toxin" AND (go:0090729)) OR ("Diphtheria toxin" AND (go:0090729)) OR ("Toxic shock" AND (go:0090729)) OR ("Ctx" AND (go:0090729)) OR ("Shiga toxin Stx" AND (go:0090729)) OR (bacteriophage AND (go:0090729)))'
+  - name: Non-Toxin
+    uniprot: 'bacteriophage NOT (go:0090729) AND reviewed: true'
+  # - name: CholeraToxin
+  #   uniprot: "'Cholera toxin' AND CTX"
+  # - name: ExotoxinCspeC
+  #   uniprot: "'exotoxin C' AND (go:0090729)"
+  # - name: ExotoxinA-speA
+  #   uniprot: '"exotoxin A" AND "(SpeA)" AND (go:0090729)'
+  # - name: Verotoxin
+  #   uniprot: '"Verotoxin" OR "shiga-like toxin" AND (go:0090729)'
+  # - name: BotulinumToxin 
+  #   uniprot: '"Botulinum toxin" AND (go:0090729)'
+  # - name: DiptheriaToxin
+  #   uniprot: '"Diphtheria toxin" AND (go:0090729)'
+  # - name: ToxicShockProtein
+  #   uniprot: '"Toxic shock" AND (go:0090729)'
+  # - name: Cytotoxin-Ctx
+  #   uniprot: '"Ctx" AND (go:0090729)'
+  # - name: ShigellaToxin
+  #   uniprot: '"Shiga toxin Stx" AND (go:0090729)'
+  # - name: GeneralToxin
+  #   uniprot: 'bacteriophage AND (go:0090729)'
+  # - name: Non-Toxin
+  #   uniprot: 'bacteriophage NOT (go:0090729) AND cc_subcellular_location: virion AND reviewed: true'

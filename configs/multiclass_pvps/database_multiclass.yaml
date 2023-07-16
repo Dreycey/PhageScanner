@@ -1,6 +1,7 @@
 clustering:
   name: cdhit
   clustering-percentage: 90
+  k_partitions: 5 # number of partitions in k-fold cross validation
 classes:
   - name: MajorCapsid
     uniprot: "major capsid AND cc_subcellular_location: virion AND reviewed: true"

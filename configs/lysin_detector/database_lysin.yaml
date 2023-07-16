@@ -1,6 +1,8 @@
 clustering:
   name: cdhit
+  deduplication-threshold: 99
   clustering-percentage: 90
+  k_partitions: 5 # number of partitions in k-fold cross validation
 classes:
   - name: Lysin
     uniprot: "endolysin"
