@@ -1,6 +1,8 @@
 clustering:
   name: cdhit
+  deduplication-threshold: 100
   clustering-percentage: 90
+  k_partitions: 5 # number of partitions in k-fold cross validation
 classes:
   - name: PVP
     uniprot: "capsid AND cc_subcellular_location: virion AND reviewed: true"

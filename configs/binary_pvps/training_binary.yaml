@@ -21,18 +21,18 @@ models:
   #     - name: "DPC"
   #       parameters:
   #         gap_size: 0
-  # - name: "PVP-SVM (SVM)"
-  #   model_info:
-  #     model_name: "SVM"
-  #     sequential: false
-  #   features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-  #     - name: "DPC"
-  #       parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-  #         gap_size: 0
-  #     - name: "AAC"
-  #     - name: "ATC"
-  #     - name: "CTD"
-  #     - name: "PCP"
+  - name: "PVP-SVM (SVM)"
+    model_info:
+      model_name: "SVM"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "DPC"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          gap_size: 0
+      - name: "AAC"
+      - name: "ATC"
+      - name: "CTD"
+      - name: "PCP"
   # - name: "SCORPION-partial (RF)"
   #   model_info:
   #     model_name: "RANDOMFOREST"
@@ -60,24 +60,14 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 0
-      - name: "DPC"
-        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-          gap_size: 1
-      - name: "DPC"
-        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-          gap_size: 2
-      - name: "DPC"
-        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-          gap_size: 5
-      - name: "TPC"
-  # - name: "DeePVP (CNN)"
-  #   model_info:
-  #     model_name: "CNN"
-  #     sequential: false
-  #   features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-  #     - name: "SEQUENTIALONEHOT"
+  - name: "DeePVP (CNN)"
+    model_info:
+      model_name: "CNN"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "SEQUENTIALONEHOT"
 classes:
   - name: PVP # No spaces. Can differ between pipelines.
-    final_csv: "binary_database/binarydb_PVP.csv" # local path.
+    final_csv: "binary_database/benchmarking_PVP.csv" # local path.
   - name: non-PVP
-    final_csv: "binary_database/binarydb_non-PVP.csv"
+    final_csv: "binary_database/benchmarking_non-PVP.csv"
