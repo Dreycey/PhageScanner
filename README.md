@@ -43,6 +43,10 @@ PhageScanner is a command line tool and machine learning pipeline for automating
     ```
     python phagescanner.py database -c configs/binary_pvps/database_binary.yaml -o ./binary_database/ -n benchmarking -v info
     ```
+    - Example (toxin proteins)
+    ```
+    python phagescanner.py database -c configs/phage_toxins/database_toxins.yaml -o ./toxin_database/ -n benchmarking -v info
+    ```
 2. Training and Test ML models
     - Basic usage
     ```
@@ -55,6 +59,10 @@ PhageScanner is a command line tool and machine learning pipeline for automating
     - Example (binary pvps)
     ```
     python phagescanner.py train -c configs/binary_pvps/training_binary.yaml -o binary_training_output -n TRAIN -v debug
+    ```
+    - Example (toxin proteins)
+    ```
+    python phagescanner.py train -c configs/phage_toxins/training_toxins.yaml -o phagetoxin_training -n TRAIN -v debug
     ```
     - Example (testing different features using baseline, logistic regression model)
     ```
