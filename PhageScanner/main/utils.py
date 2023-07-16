@@ -165,6 +165,10 @@ class DatabaseConfig(ConfigUtils):
         """Get the number of partitions to use for k-fold CV."""
         return self.config["clustering"]["k_partitions"]
 
+    def get_deduplication_threshold(self) -> int:
+        """Get the number of partitions to use for k-fold CV."""
+        return self.config["clustering"]["deduplication-threshold"] / 100
+
 class TrainingConfig(ConfigUtils):
     """The training pipeline configuration object.
 
@@ -269,6 +273,10 @@ class PredictionConfig(ConfigUtils):
         """Get the name of the orffinder from the configuration."""
         return self.config["orffinder"]
 
+    def get_probability_threshold(self):
+        """Get the probability needed for classifying proteins."""
+        return float(self.config["probability_threshold"])
+    
     def sequential(self, model_name):
         """Return True if the model takes in sequential data."""
         for m in self.config["models"]:

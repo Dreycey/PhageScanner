@@ -88,7 +88,6 @@ class Pipeline(ABC):
 
         # use the aggregator to extract features from self.dataframe
         logging.info(f"extracting features for model: '{model_name}': {feature_list}")
-        logging.info(f"extractor's features: '{aggregator.extractors}")
         self.dataframe["features"] = self.dataframe["protein"].apply(
             aggregator.extract_features
         )
@@ -110,9 +109,6 @@ class DatabasePipeline(Pipeline):
         self.config_object = utils.DatabaseConfig(config)
         self.pipeline_name = pipeline_name
         self.directory = directory
-
-        # threshold for removing duplicates
-        self.threshold_deduplication = 0.95
 
         # create directory if it doesn't exist
         if not os.path.exists(self.directory):
@@ -288,7 +284,7 @@ class DatabasePipeline(Pipeline):
             logging.info(f"\t Partitioning class {k_partitions}-fold: {class_name}")
 
             # get path to proteins before and after clustering.
-            fasta_non_clustered = self.get_fasta_path(class_name, identity=self.threshold_deduplication)
+            fasta_non_clustered = self.get_fasta_path(class_name, identity=self.config_object.get_deduplication_threshold())
             fasta_clustered = self.get_fasta_path(class_name, identity=clustering_identity_threshold)
 
             # get clustering tool
@@ -364,13 +360,13 @@ class DatabasePipeline(Pipeline):
 
         # Step 2: cluster proteins to remove duplicates.
         logging.info("Step 2 - Removing duplicates...")
-        self.cluster_proteins(clustering_identity_threshold=self.threshold_deduplication)
+        self.cluster_proteins(clustering_identity_threshold=self.config_object.get_deduplication_threshold())
         logging.info("Step 2 (Finished) - Removing duplicates...")
 
         # Step 3: cluster proteins at the predifined clustering threshold.
         logging.info("Step 3 - Cluster the proteins...")
         self.cluster_proteins(clustering_identity_threshold=self.config_object.get_clustering_threshold(),
-                              input_identity_threshold=self.threshold_deduplication)
+                              input_identity_threshold=self.config_object.get_deduplication_threshold())
         logging.info("Step 3 (Finished) - Cluster the proteins...")
 
         # Step 4: create k-fold partitioned clusters.
@@ -457,32 +453,54 @@ class TrainingPipeline(Pipeline):
             )
 
     def balance_partitions(self):
-        """Balance classes  within each partition."""
+        """Balance classes  within each partition.
+        
+        Description:
+            Here we upsample the smaller classes with replacement. The 
+            justification is that there may be large negative classes, 
+            for example non-pvp, that contain more unique proteins. For the 
+            models to learn these, we don't want to downsample. Likewise, if
+            there are really small classes, then the models would lose context
+            on other potential proteins within the other classes.
+        """
         new_balanced_partitions_df = []
         for partition in self.dataframe["partition"].unique():
             partition_df = self.dataframe[self.dataframe["partition"] == partition]
 
             # get smallest class size.
             class_sizes = partition_df["class"].value_counts()
-            min_class = min(class_sizes)
+            max_class_size = max(class_sizes)
 
             # create a balanced partition.
             balanced_partition_df_list = []
             for class_index in partition_df["class"].unique():
-                class_df = partition_df[partition_df["class"] == class_index]
-                balanced_class_df = class_df.sample(n=min_class, random_state=1)
-                balanced_partition_df_list.append(balanced_class_df)
+                # get proteins corresponding to the  class index.
+                class_df: pd.DataFrame = partition_df[partition_df["class"] == class_index]
 
-            # add balanced partition to new_balanced_partitions_df
-            balanced_partition_df = pd.concat(
-                balanced_partition_df_list, ignore_index=True
-            )
-            assert min_class == min(
+                # add to balanced_partition_df_list
+                balanced_partition_df_list.append(class_df)
+
+                # get differrence from the max class size, then upsample w/ replacement
+                size_difference = max_class_size - len(class_df)
+                if size_difference > 0:
+                    balanced_class_df = class_df.sample(n=size_difference, 
+                                                        random_state=1, 
+                                                        replace=True)
+                    balanced_partition_df_list.append(balanced_class_df)
+
+            # combine balanced classes for this partition.
+            balanced_partition_df = pd.concat(balanced_partition_df_list, 
+                                              ignore_index=True)
+            
+            # ensure the min class size is now the same as max.
+            assert max_class_size == min(
                 balanced_partition_df["class"].value_counts()
-            )  # TODO: turn into raise error
+            )
+
+            # add balanced partition to new_balanced_partitions_df.
             new_balanced_partitions_df.append(balanced_partition_df)
 
-        # update the entire dataframe
+        # combine all balanced partitions to a single dataframe.
         self.dataframe = pd.concat(new_balanced_partitions_df, ignore_index=True)
 
     def get_kfold_training(self):
@@ -604,17 +622,17 @@ class TrainingPipeline(Pipeline):
         self.save_class_mapping()
         logging.info("Step 1 (Finished) - Class balance and combine partitions...")
 
-        # Step 2: Balance the classes with different partitions.
-        logging.info("Step 2 - Balancing classes in each partition...")
-        self.balance_partitions()
-        logging.info("Step 2 (Finished) - Balancing classes in each partition...")
-
-        # Step 3: clean proteins
-        logging.info("Step 3 - Cleaning proteins...")
+        # Step 2: clean proteins
+        logging.info("Step 2 - Cleaning proteins...")
         self.dataframe["protein"] = self.dataframe["protein"].apply(
             ProteinFeatureExtraction.clean_protein
         )
-        logging.info("Step 3 (Finished) - Cleaning proteins...")
+        logging.info("Step 2 (Finished) - Cleaning proteins...")
+
+        # Step 3: Balance the classes with different partitions.
+        logging.info("Step 3 - Balancing classes in each partition...")
+        self.balance_partitions()
+        logging.info("Step 3 (Finished) - Balancing classes in each partition...")
 
         # Step 3: extract features and train.
         logging.info("Step 4 - Training Models")
@@ -846,7 +864,15 @@ class PredictionPipeline(Pipeline):
 
             # predict features from proteins.
             x_test = np.vstack(self.dataframe["features"].to_numpy())
-            self.dataframe[model] = model_object.predict(x_test)
+            predictions, probabilities = model_object.predict(x_test)
+            self.dataframe[model] = predictions
+
+            # use probabilities threshold.
+            if len(probabilities) == len(predictions):
+                probabilities_series = pd.Series(probabilities)
+                self.dataframe[model].mask(probabilities_series < self.config_object.get_probability_threshold(), 
+                                           "No prediction", 
+                                           inplace=True)
 
             # replace values with class names.
             self.dataframe[model].replace(index2class, inplace=True)

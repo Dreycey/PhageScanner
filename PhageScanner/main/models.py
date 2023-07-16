@@ -96,9 +96,9 @@ class ModelNames(Enum):
         if adapter is None:
             tools_available = ",".join(name2adapter.keys())
             exception_string = (
-                "The Clustering tool requested in the Yaml File is not available. "
+                "The model requested in the Yaml File is not available. "
             )
-            exception_string += f"The requested tool in the Yaml is: {name}. "
+            exception_string += f"The requested model in the Yaml is: {name}. "
             exception_string += f"The options available are: {tools_available}"
             raise IncorrectYamlError(exception_string)
         return adapter
@@ -153,7 +153,7 @@ class Model(ABC):
         """Test the model on known data."""
         # get predictions.
         start_time = time.time()
-        predictions = self.predict(test_x)
+        predictions, _ = self.predict(test_x)
         execution_time = time.time() - start_time
 
         # get length of dataset.
@@ -203,7 +203,12 @@ class ScikitModel(Model):
     def predict(self, test_x):
         """Predict a classes for an array of input proteins."""
         predictions = self.model.predict(test_x)
-        return predictions
+        try:
+            probabilities = self.model.predict_proba(test_x)
+            probabilities = np.max(probabilities, axis=-1)
+        except AttributeError:
+            probabilities = []
+        return predictions, probabilities
 
 
 class KerasModel(Model):
@@ -229,9 +234,10 @@ class KerasModel(Model):
 
     def predict(self, test_x):
         """Predict a classes for an array of input proteins."""
-        prediction_probabilities = self.model.predict(test_x)
-        predictions = np.argmax(prediction_probabilities, axis=-1)
-        return predictions
+        probabilities = self.model.predict(test_x)
+        predictions = np.argmax(probabilities, axis=-1)
+        probabilities = np.max(probabilities, axis=-1)
+        return predictions, probabilities
 
 
 class SVCMultiClassModel(ScikitModel):
@@ -239,7 +245,7 @@ class SVCMultiClassModel(ScikitModel):
 
     def __init__(self):
         """Instantiate a new SVCMultiClassModel."""
-        self.model = make_pipeline(StandardScaler(), SVC(random_state=0, tol=1e-5))
+        self.model = make_pipeline(StandardScaler(), SVC(random_state=0, tol=1e-5, probability=True))
 
 
 class MultiNaiveBayesClassModel(ScikitModel):
@@ -604,7 +610,7 @@ class BlastClassifier(BLASTWrapper, Model):
             )
             raise IncorrectValueError(error_message)
 
-        return prediction
+        return prediction, []
 
     def _save_array_to_fasta(
         self, array: List[str], output_file: Path, classes: List[int] = None
