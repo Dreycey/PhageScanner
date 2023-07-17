@@ -12,6 +12,9 @@
 
 PhageScanner is a command line tool for identifying phage virion proteins (PVPs) using sequencing data as input.
 
+Subscribe to email list:![SUBSCRIBE](http://eepurl.com/ivMTlY)
+Unsubscribe from email list: ![UNSUBSCRIBE](https://gmail.us13.list-manage.com/unsubscribe?u=d11fd2924efec07fab20ba388&id=a7720cf873)
+
 ## Installation
 
 To setup the conda environment, use the following command once conda is installed locally.
