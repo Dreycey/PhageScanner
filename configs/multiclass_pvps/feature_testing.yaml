@@ -1,0 +1,123 @@
+models:
+  - name: "FT-DPC (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "DPC"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          gap_size: 0
+  - name: "FT-DPC-g1 (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features:
+      - name: "DPC"
+        parameters:
+          gap_size: 1
+  - name: "FT-DPC-g9 (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features:
+      - name: "DPC"
+        parameters:
+          gap_size: 9
+  - name: "FT-TPC (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "TPC"
+  - name: "FT-AAC (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "AAC"
+  - name: "FT-ISO (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "ISO"
+  - name: "FT-ATC (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "ATC"
+  - name: "FT-CTD (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "CTD"
+  - name: "FT-CHEMFEATURES (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "CHEMFEATURES"
+  - name: "FT-Mix1 (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "CHEMFEATURES"
+      - name: "DPC"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          gap_size: 0
+  - name: "FT-Mix2 (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "DPC"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          gap_size: 0
+      - name: "TPC"
+  - name: "FT-Mix3 (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "DPC"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          gap_size: 0
+      - name: "ATC"
+      - name: "CTD"
+  - name: "FT-Mix4 (Logistic Regression)"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "ATC"
+      - name: "CTD"
+      - name: "AAC"
+      - name: "ISO"
+      - name: "CHEMFEATURES"
+classes:
+  - name: MajorCapsid # No spaces. Can differ between pipelines.
+    final_csv: "benchmarking_database/benchmarking_MajorCapsid.csv" # local path.
+  - name: MinorCapsid
+    final_csv: "benchmarking_database/benchmarking_MinorCapsid.csv"
+  - name: Baseplate
+    final_csv: "benchmarking_database/benchmarking_Baseplate.csv"
+  - name: MajorTail
+    final_csv: "benchmarking_database/benchmarking_MajorTail.csv"
+  - name: MinorTail
+    final_csv: "benchmarking_database/benchmarking_MinorTail.csv"
+  - name: Portal
+    final_csv: "benchmarking_database/benchmarking_Portal.csv"
+  - name: TailFiber
+    final_csv: "benchmarking_database/benchmarking_TailFiber.csv"
+  - name: Collar
+    final_csv: "benchmarking_database/benchmarking_Collar.csv"
+  - name: shaft
+    final_csv: "benchmarking_database/benchmarking_shaft.csv"
+  - name: HTJ
+    final_csv: "benchmarking_database/benchmarking_HTJ.csv"
+  - name: Other
+    final_csv: "benchmarking_database/BINARY_non-PVP.csv"

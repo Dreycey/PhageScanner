@@ -9,6 +9,7 @@ Description:
 """
 import logging
 import os
+import random
 import shutil
 import tempfile
 import time
@@ -19,24 +20,42 @@ from typing import List
 
 import joblib
 import numpy as np
-from keras.layers import Dense, Dropout
-# FFNN
+from keras.callbacks import EarlyStopping
+from keras.layers import (
+    LSTM,
+    BatchNormalization,
+    Conv1D,
+    Dense,
+    Dropout,
+    Flatten,
+    MaxPooling1D,
+)
 from keras.models import Sequential, load_model
 from keras.optimizers import Adam
+from keras.regularizers import l1
+
+# scikit-learn
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
-                             precision_score, recall_score)
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-# scikit-learn models
-# SVM model
 from sklearn.svm import SVC
 
-from PhageScanner.main.blast_wrapper import BLASTWrapper
 # in-house libraries
-from PhageScanner.main.exceptions import (IncorrectValueError,
-                                          IncorrectYamlError, MissingFileError)
+from PhageScanner.main.blast_wrapper import BLASTWrapper
+from PhageScanner.main.exceptions import (
+    IncorrectValueError,
+    IncorrectYamlError,
+    MissingFileError,
+)
 from PhageScanner.main.utils import FastaUtils
 
 
@@ -54,6 +73,9 @@ class ModelNames(Enum):
     gradboost = "GRADBOOST"
     randomforest = "RANDOMFOREST"
     blast = "BLAST"
+    logreg = "LOGREG"
+    cnn = "CNN"
+    rnn = "RNN"
 
     @classmethod
     def get_model(cls, name):
@@ -65,15 +87,16 @@ class ModelNames(Enum):
             cls.gradboost.value: GradientBoostingClassModel(),
             cls.randomforest.value: RandomForestClassModel(),
             cls.blast.value: BlastClassifier(),
+            cls.logreg.value: LogRegClassModel(),
+            cls.cnn.value: CNNMultiClassifier(),
+            cls.rnn.value: RNNMultiClassifier(),
         }
         adapter = name2adapter.get(name)
 
         if adapter is None:
             tools_available = ",".join(name2adapter.keys())
-            exception_string = (
-                "The Clustering tool requested in the Yaml File is not available. "
-            )
-            exception_string += f"The requested tool in the Yaml is: {name}. "
+            exception_string = "The model requested in the Yaml File is not available. "
+            exception_string += f"The requested model in the Yaml is: {name}. "
             exception_string += f"The options available are: {tools_available}"
             raise IncorrectYamlError(exception_string)
         return adapter
@@ -128,21 +151,23 @@ class Model(ABC):
         """Test the model on known data."""
         # get predictions.
         start_time = time.time()
-        predictions = self.predict(test_x)
+        predictions, _ = self.predict(test_x)
         execution_time = time.time() - start_time
+
+        # get length of dataset.
+        dataset_length = len(test_x)
 
         # create output dictionary
         result_dictionary = {
             "accuracy": np.round(accuracy_score(predictions, test_y), 3),
             "confusion_matrix": confusion_matrix(predictions, test_y),
-            "f1score": np.round(f1_score(predictions, test_y, average="weighted"), 3),
+            "f1score": np.round(f1_score(predictions, test_y, average=None), 3),
             "precision": np.round(
-                precision_score(predictions, test_y, average="weighted"), 3
+                precision_score(predictions, test_y, average=None), 3
             ),
-            "recall": np.round(
-                recall_score(predictions, test_y, average="weighted"), 3
-            ),
+            "recall": np.round(recall_score(predictions, test_y, average=None), 3),
             "execution_time_seconds": round(execution_time, 6),
+            "dataset_size": dataset_length,
         }
 
         return result_dictionary
@@ -176,7 +201,12 @@ class ScikitModel(Model):
     def predict(self, test_x):
         """Predict a classes for an array of input proteins."""
         predictions = self.model.predict(test_x)
-        return predictions
+        try:
+            probabilities = self.model.predict_proba(test_x)
+            probabilities = np.max(probabilities, axis=-1)
+        except AttributeError:
+            probabilities = []
+        return predictions, probabilities
 
 
 class KerasModel(Model):
@@ -202,9 +232,10 @@ class KerasModel(Model):
 
     def predict(self, test_x):
         """Predict a classes for an array of input proteins."""
-        prediction_probabilities = self.model.predict(test_x)
-        predictions = np.argmax(prediction_probabilities, axis=-1)
-        return predictions
+        probabilities = self.model.predict(test_x)
+        predictions = np.argmax(probabilities, axis=-1)
+        probabilities = np.max(probabilities, axis=-1)
+        return predictions, probabilities
 
 
 class SVCMultiClassModel(ScikitModel):
@@ -212,7 +243,9 @@ class SVCMultiClassModel(ScikitModel):
 
     def __init__(self):
         """Instantiate a new SVCMultiClassModel."""
-        self.model = make_pipeline(StandardScaler(), SVC(random_state=0, tol=1e-5))
+        self.model = make_pipeline(
+            StandardScaler(), SVC(random_state=0, tol=1e-5, probability=True)
+        )
 
 
 class MultiNaiveBayesClassModel(ScikitModel):
@@ -221,6 +254,14 @@ class MultiNaiveBayesClassModel(ScikitModel):
     def __init__(self):
         """Instantiate a new MultiNaiveBayesClassModel."""
         self.model = MultinomialNB(force_alpha=True)
+
+
+class LogRegClassModel(ScikitModel):
+    """Class for logistic regression one-verse-all model."""
+
+    def __init__(self):
+        """Instantiate a new LogRegClassModel."""
+        self.model = LogisticRegression(random_state=0, multi_class="ovr")
 
 
 class GradientBoostingClassModel(ScikitModel):
@@ -292,7 +333,149 @@ class FFNNMultiClassModel(KerasModel):
                 number_of_classes=max(train_y) + 1,
             )
 
-        self.model.fit(train_x, train_y, epochs=10, batch_size=32, verbose=1)
+        # set up early stopping criterion. If training doesn't
+        # improve after 2 batches, finish.
+        early_stopping = EarlyStopping(
+            monitor="loss", mode="min", min_delta=0.01, patience=10
+        )
+        self.model.fit(
+            train_x,
+            train_y,
+            epochs=300,
+            callbacks=[early_stopping],
+            batch_size=32,
+            verbose=1,
+        )
+
+
+class RNNMultiClassifier(KerasModel):
+    """RNN MultiClassifier built"""
+
+    def __init__(self):
+        """Initialize the RNN MultiClassifier."""
+        self.model = None
+
+    def build_model(self, row_length, column_length, number_of_classes):
+        """Build the RNN Model.
+
+        Description:
+            Sets the layers and parameters for the RNN. The last functionality
+            of this method is comiling the model.
+        """
+        # Create a sequential model
+        model = Sequential()
+
+        # Add an LSTM layer
+        model.add(
+            LSTM(50, input_shape=(row_length, column_length), return_sequences=False)
+        )
+
+        # add FF layers
+        model.add(Dense(1000, activation="relu"))
+        model.add(Dense(100, activation="relu"))
+
+        # last, output, layer
+        model.add(Dense(number_of_classes, activation="softmax"))
+
+        # Compile the model
+        model.compile(
+            loss="sparse_categorical_crossentropy",
+            optimizer="adam",
+            metrics=["accuracy"],
+        )
+
+        return model
+
+    def train(self, train_x, train_y):
+        """Train an RNN on multiclass data"""
+        if self.model is None:
+            self.model = self.build_model(
+                row_length=len(train_x[0]),
+                column_length=len(train_x[0][0]),
+                number_of_classes=max(train_y) + 1,
+            )
+
+        # set up early stopping criterion. If training doesn't
+        # improve after 2 batches, finish.
+        early_stopping = EarlyStopping(
+            monitor="loss", mode="min", min_delta=0.01, patience=2
+        )
+        self.model.fit(
+            train_x,
+            train_y,
+            epochs=300,
+            callbacks=[early_stopping],
+            batch_size=32,
+            verbose=1,
+        )
+
+
+class CNNMultiClassifier(KerasModel):
+    """CNN MultiClassifier built using the outline of DeepPVP."""
+
+    def __init__(self):
+        """Construct the CNN."""
+        self.model = None
+
+    def build_model(self, row_length, column_length, number_of_classes):
+        """Build the CNN.
+
+        Description:
+            Sets the layers and parameters for the CNN. The last functionality
+            of this method is comiling the model.
+        """
+        # Define the model
+        model = Sequential()
+        # Convolutional layer
+        model.add(
+            Conv1D(
+                filters=32,
+                kernel_size=3,
+                activation="relu",
+                input_shape=(row_length, column_length),
+            )
+        )
+        # Max pooling layer
+        model.add(MaxPooling1D(pool_size=4))
+        # Batch normalization layer
+        model.add(BatchNormalization())
+        # Flatten the output from the previous layer
+        model.add(Flatten())
+        # Fully connected layer
+        model.add(Dense(64, activation="relu", kernel_regularizer=l1(0.01)))
+        # Compile the model
+        # if number_of_classes > 2:
+        model.add(Dense(number_of_classes, activation="softmax"))
+        model.compile(
+            loss="sparse_categorical_crossentropy",
+            optimizer="adam",
+            metrics=["accuracy"],
+        )
+
+        return model
+
+    def train(self, train_x, train_y):
+        """Train an CNN on multiclass data"""
+        if self.model is None:
+            self.model = self.build_model(
+                row_length=len(train_x[0]),
+                column_length=len(train_x[0][0]),
+                number_of_classes=max(train_y) + 1,
+            )
+
+        # set up early stopping criterion. If training
+        # doesn't improve after 2 batches, finish.
+        early_stopping = EarlyStopping(
+            monitor="loss", mode="min", min_delta=0.01, patience=2
+        )
+        self.model.fit(
+            train_x,
+            train_y,
+            epochs=300,
+            callbacks=[early_stopping],
+            batch_size=32,
+            verbose=1,
+        )
 
 
 class BlastClassifier(BLASTWrapper, Model):
@@ -343,7 +526,7 @@ class BlastClassifier(BLASTWrapper, Model):
             The only thing this really does is tell
             blast where the database is located.
         """
-        model_obj = cls(database_path=file_path / "BLAST_DB")
+        model_obj = cls(database_path=Path(file_path) / "BLAST_DB")
         return model_obj
 
     def train(self, train_x: List[str], train_y: List[int]):
@@ -427,7 +610,7 @@ class BlastClassifier(BLASTWrapper, Model):
             )
             raise IncorrectValueError(error_message)
 
-        return prediction
+        return prediction, []
 
     def _save_array_to_fasta(
         self, array: List[str], output_file: Path, classes: List[int] = None
@@ -479,7 +662,7 @@ class BlastClassifier(BLASTWrapper, Model):
                 raised if not.
         """
         # name of temporary file for output.
-        blast_temp_file = Path(tempfile.NamedTemporaryFile(delete=True).name)
+        blast_temp_file = Path(tempfile.NamedTemporaryFile(delete=False).name)
 
         # query blast db.
         self.query(fasta_file=fasta_file, outputfile=blast_temp_file, threads=threads)
@@ -495,10 +678,31 @@ class BlastClassifier(BLASTWrapper, Model):
             raise MissingFileError(error_message)
 
         # open the output file and find classes.
+        output_classes = self._parse_blast_results(blast_temp_file)
+        classes_guessed = list(set(output_classes.values()))
+
+        # for each accession in the fasta, find the class/randomly choose
+        prediction_array = []
+        for accession, _ in FastaUtils.get_proteins(fasta_file):
+            if accession in output_classes:
+                prediction_array.append(output_classes[accession])
+            else:
+                logging.warning("Could not BLAST protein! Guessing the class randomly.")
+                prediction_array.append(random.choice(classes_guessed))
+
+        return np.array(prediction_array)
+
+    def _parse_blast_results(self, results: Path):
+        """Parse the Blast output results.
+
+        Description:
+            Parses the blast results, returning a dictionary
+            mapping each accession ID to the blast classification.
+        """
         output_classes = {}
         current_accesion = None
         top_score, current_class = 0, None
-        with open(blast_temp_file, "r") as temp_file:
+        with open(results, "r") as temp_file:
             for line in temp_file.readlines():
                 # parse the new line in the output file.
                 accession, class_name, score = line.strip("\n").split("\t")
@@ -518,4 +722,5 @@ class BlastClassifier(BLASTWrapper, Model):
                     current_class = class_name
             # last value
             output_classes[current_accesion] = current_class
-        return np.array(list(output_classes.values()))
+
+        return output_classes

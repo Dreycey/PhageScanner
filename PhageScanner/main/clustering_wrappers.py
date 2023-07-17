@@ -65,7 +65,7 @@ class CDHitWrapper(ClusterWrapper):
         self.threads = threads
         self.tool_exe = "cd-hit"  # change this if executable is not env variable.
 
-    def cluster(self, fasta_file: Path, outpath: Path, identity=int):
+    def cluster(self, fasta_file: Path, outpath: Path, identity=float):
         """Cluster a fasta file of proteins using CDHit."""
         logging.debug(f"Clustering proteins for {fasta_file}")
         command = f"{self.tool_exe} -i {fasta_file} -o {outpath} -c {identity}"
@@ -75,7 +75,7 @@ class CDHitWrapper(ClusterWrapper):
 
     def get_clusters(self, file_prefix: Path) -> Dict[str, List[str]]:
         """Obtain a dictionary of clusters."""
-        file_path = file_prefix.with_suffix(".clstr")
+        file_path = file_prefix.parent / (file_prefix.name + ".clstr")
         cluster = {}
         # obtain clusters
         cluster_members, cluster_name = [], "(Error) initialized cluster name"

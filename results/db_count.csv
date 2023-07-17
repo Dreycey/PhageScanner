@@ -1,0 +1,21 @@
+datetime,database,class,class_count
+Sat Jun 24 15:03:28 2023,uniprot,MajorCapsid,1334
+Sat Jun 24 15:03:28 2023,uniprot,MinorCapsid,504
+Sat Jun 24 15:03:28 2023,uniprot,Baseplate,59
+Sat Jun 24 15:03:28 2023,uniprot,MajorTail,301
+Sat Jun 24 15:03:28 2023,uniprot,MinorTail,149
+Sat Jun 24 15:03:28 2023,uniprot,Portal,129
+Sat Jun 24 15:03:28 2023,uniprot,TailFiber,109
+Sat Jun 24 15:03:28 2023,uniprot,Collar,19
+Sat Jun 24 15:03:28 2023,uniprot,shaft,72
+Sat Jun 24 15:03:28 2023,uniprot,HTJ,123
+Sat Jun 24 15:03:28 2023,entrez,MajorCapsid,209067
+Sat Jun 24 15:03:28 2023,entrez,MinorCapsid,8389
+Sat Jun 24 15:03:28 2023,entrez,Baseplate,157227
+Sat Jun 24 15:03:28 2023,entrez,MajorTail,110030
+Sat Jun 24 15:03:28 2023,entrez,MinorTail,184024
+Sat Jun 24 15:03:28 2023,entrez,Portal,363637
+Sat Jun 24 15:03:28 2023,entrez,TailFiber,62570
+Sat Jun 24 15:03:28 2023,entrez,Collar,5013
+Sat Jun 24 15:03:28 2023,entrez,shaft,96068
+Sat Jun 24 15:03:28 2023,entrez,HTJ,96585

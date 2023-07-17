@@ -18,6 +18,8 @@ import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter, Retry
 
+from PhageScanner.main.exceptions import PipelineExceptionError
+
 
 class DatabaseAdapterNames(Enum):
     """Names of database adapters.
@@ -242,6 +244,22 @@ class EntrezAdapter(DatabaseAdapter):
         )
         search_url += f"&retmode={retmode}&retmax=1"
         response = requests.get(search_url)
+
+        # handle error response
+        # Context: For some reason Entrez gives error response?
+        #          looked into this and seems to be a problem
+        #          on their end. Seems like waiting helps.
+        if response.status_code == 500:
+            error_message = "Couldn't get data from Entrez. "
+            error_message += "This has been a problem in the past. "
+            error_message += "Can use without entrez, or you can try again later. "
+            error_message += "Waiting 30min+ seems to work. "
+            error_message += (
+                "If not resolved, check here: https://www.biostars.org/p/476638/"
+            )
+            raise PipelineExceptionError(error_message)
+
+        # get content.
         soup = BeautifulSoup(response.content, features="xml")
         dataset_size = int(soup.find("Count").text)
 
@@ -329,121 +347,3 @@ if __name__ == "__main__":
     # modified_query = "bacteriophage[Organism] AND lysin"
     for batch in entrez.query(query=modified_query):
         print(batch)
-
-
-# if False:  # these work.
-#     url = "https://www.ebi.ac.uk/proteins/api/proteins"
-#     params = {
-#         "offset": "0",
-#         "size": "10000",
-#         "reviewed": "true",
-#         "organism": "Bacteriophage",
-#         "format": "fasta"
-#     }
-
-#     response = requests.get(url, params=params)
-
-#     if response.ok:
-#         filename = "bacteriophage.fasta"
-#         with open(filename, "w") as f:
-#             f.write(response.text)
-#         print(f"FASTA sequences written to {filename}")
-#     else:
-#         print(
-#             f"Error downloading sequences: {response.status_code}
-# {response.reason}")
-
-#     params = {
-#         "offset": "0",
-#         "size": "100",
-#         "reviewed": "true",
-#         "format": "csv",
-#         "organism": "Bacteriophage",
-#         "columns": "id,entry name,protein names,genes,length,organism"
-#     }
-
-#     response = requests.get(url, params=params)
-
-#     if response.ok:
-#         filename = "bacteriophage.txt"
-#         with open(filename, "w") as f:
-#             f.write(response.text)
-#         print(f"Protein information written to {filename}")
-#     else:
-#         print(
-#             f"Error downloading protein information:
-#            {response.status_code} {response.reason}")
-# if false:
-#     import requests
-
-
-# # import requests
-# # import mysql.connector
-
-# # class MySQLAdapter:
-# #     def __init__(self, db_config):
-# #         self.db_config = db_config
-
-# #     def insert_protein(self, protein):
-# #         # Connect to MySQL database
-# #         cnx = mysql.connector.connect(**self.db_config)
-# #         cursor = cnx.cursor()
-
-# #         # Insert protein into database
-# #         add_protein = ("INSERT INTO proteins "
-# #                        "(id, name, description, sequence) "
-# #                        "VALUES (%s, %s, %s, %s)")
-# #         data_protein = (protein.id, protein.name, protein.description,
-# protein.sequence)
-# #         cursor.execute(add_protein, data_protein)
-
-# #         # Commit changes and close connection
-# #         cnx.commit()
-# #         cursor.close()
-# #         cnx.close()
-
-
-# if False:
-#     import mysql.connector
-
-#     class MySQLAdapter:
-#         def __init__(self, db_config):
-#             self.db_config = db_config
-#             self._connect()
-
-#         def _connect(self):
-#             self.cnx = mysql.connector.connect(**self.db_config)
-#             self.cursor = self.cnx.cursor()
-
-#         def store_protein(self, protein):
-#             # Insert protein into database
-#             add_protein = ("INSERT INTO proteins "
-#                            "(id, name, description, sequence) "
-#                            "VALUES (%s, %s, %s, %s)")
-#             data_protein = (protein.id, protein.name,
-#                             protein.description, protein.sequence)
-#             self.cursor.execute(add_protein, data_protein)
-#             self.cnx.commit()
-
-#         def check_protein(self, protein_id):
-#             # Retrieve protein from database
-#             query = ("SELECT id, name, description, sequence "
-#                      "FROM proteins "
-#                      "WHERE id = %s")
-#             data_protein = (protein_id,)
-#             self.cursor.execute(query, data_protein)
-#             row = self.cursor.fetchone()
-
-#             # Check if protein is in database
-#             if row is None:
-#                 return False
-
-#             # Check if any fields are missing
-#             if None in row:
-#                 return True
-
-#             return False
-
-#         def close(self):
-#             self.cursor.close()
-#             self.cnx.close()

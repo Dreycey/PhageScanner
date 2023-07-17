@@ -1,0 +1,38 @@
+clustering:
+  name: cdhit
+  clustering-percentage: 90
+  k_partitions: 5 # number of partitions in k-fold cross validation
+classes:
+  - name: MajorCapsid
+    uniprot: "major capsid AND cc_subcellular_location: virion AND reviewed: true"
+    # entrez: "major capsid[Title]"
+  - name: MinorCapsid
+    uniprot: "minor capsid AND cc_subcellular_location: virion AND reviewed: true"
+    # entrez: "minor capsid[Title]"
+  - name: Baseplate
+    uniprot: "baseplate AND cc_subcellular_location: virion AND reviewed: true"
+    # entrez: "baseplate[Title]"
+  - name: MajorTail
+    uniprot: "major tail AND cc_subcellular_location: virion AND reviewed: true"
+    # entrez: "major tail[Title]"
+  - name: MinorTail
+    uniprot: "minor tail AND cc_subcellular_location: virion AND reviewed: true"
+    # entrez: "minor tail[Title]"
+  - name: Portal
+    uniprot: "portal AND cc_subcellular_location: virion AND reviewed: true"
+    # entrez: "portal[Title]"
+  - name: TailFiber
+    uniprot: "tail fiber AND cc_subcellular_location: virion AND reviewed: true"
+    # entrez: "tail fiber[Title]"
+  - name: Collar
+    uniprot: "collar AND cc_subcellular_location: virion AND reviewed: true"
+    # entrez: "collar[Title]"
+  - name: shaft
+    uniprot: "(shaft OR sheath) AND tail AND cc_subcellular_location: virion AND reviewed: true"
+    # entrez: "(shaft[Title] OR sheath[Title]) AND tail[Title]"
+  - name: HTJ
+    uniprot: "head-tail AND cc_subcellular_location: virion AND reviewed: true"
+    # entrez: "head-tail[Title]"
+  - name: non-PVP
+    uniprot: "capsid NOT cc_subcellular_location: virion AND reviewed: true"
+    entrez: "bacteriophage[Organism] NOT ((shaft[Title] OR sheath[Title]) AND tail[Title]) OR head-tail[Title] OR tail fiber[Title] OR portal[Title] OR minor tail[Title] OR major tail[Title] OR baseplate[Title] OR minor capsid[Title] OR major capsid[Title])"

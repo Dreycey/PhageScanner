@@ -34,19 +34,39 @@ PhageScanner is a command line tool and machine learning pipeline for automating
     ```
     python phagescanner.py database -c Path/To/Config.yaml -o path/to/output/directory/ -n name_for_files_<classname>
     ```
-    - Example
+    - Example (multiclass pvps)
     ```
-    python phagescanner.py database -c configs/database_multiclass.yaml -o ./benchmarking_database/ -n benchmarking -v info
+    python phagescanner.py database -c configs/multiclass_pvps/database_multiclass.yaml -o ./benchmarking_database/ -n benchmarking -v info
 
     ```
-2. Traing and Test ML models
+    - Example (binary pvps)
+    ```
+    python phagescanner.py database -c configs/binary_pvps/database_binary.yaml -o ./binary_database/ -n benchmarking -v info
+    ```
+    - Example (toxin proteins)
+    ```
+    python phagescanner.py database -c configs/phage_toxins/database_toxins.yaml -o ./toxin_database/ -n benchmarking -v info
+    ```
+2. Training and Test ML models
     - Basic usage
     ```
     python phagescanner.py train -c Path/To/Config.yaml -o path/to/output/directory/ -n name_for_files_<classname> -v debug
     ```
-    - Example
+    - Example (multiclass pvps)
     ```
-    python phagescanner.py train -c configs/training_multiclass.yaml -o training_output -n TRAIN -v debug
+    python phagescanner.py train -c configs/multiclass_pvps/training_multiclass.yaml -o training_output -n TRAIN -v debug
+    ```
+    - Example (binary pvps)
+    ```
+    python phagescanner.py train -c configs/binary_pvps/training_binary.yaml -o binary_training_output -n TRAIN -v debug
+    ```
+    - Example (toxin proteins)
+    ```
+    python phagescanner.py train -c configs/phage_toxins/training_toxins.yaml -o phagetoxin_training -n TRAIN -v debug
+    ```
+    - Example (testing different features using baseline, logistic regression model)
+    ```
+    python phagescanner.py train -c configs/multiclass_pvps/feature_testing.yaml -o feature_testing -n TRAIN -v debug
     ```
 3. Run on metagenomic data, genomes or proteins
     - Basic usage
@@ -64,6 +84,30 @@ PhageScanner is a command line tool and machine learning pipeline for automating
     - Example (proteins)
     ```
     python phagescanner.py predict -c configs/prediction.yaml -t "protein" -o prediction_output -n OUTPREFIX -i examples/Phage_Collar_proteins.fa -v debug
+    ```
+
+# PhageScanner GUI
+
+PhageScanner has a GUI for viewing the results of the prediction pipeline to allow for scraping proteins of interest. This GUI is a visual tool for viewing the results of the prediction pipeline. The benefit of this GUI is that it allows for vissually mining proteins that may be interesting for further analysis, or for observing where the proteins appear within a genome or contig (along with synteny).
+
+![Phage Scanner GUI](misc/gui_image.png)
+
+## Usage
+
+1. Create images from the output of running the `predict` pipeline.
+    - run the `predict` pipeline on genomes or reads
+    ```
+    python phagescanner.py predict -c configs/prediction.yaml -t "genome" -o prediction_output -n "genomes" -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
+    ```
+    - use output from the `predict` pipeline to create images
+    ```
+    python phagescanner_gui.py create_images -p prediction_output/genomes_predictions.csv -o output_images/
+    ```
+2. Open the GUI using the path to the prediction output and the images path.
+    - Open the GUI
+    ```
+    python phagescanner_gui.py gui -p prediction_output/genomes_predictions.csv -o output_i
+mages/
     ```
 
 # Notes

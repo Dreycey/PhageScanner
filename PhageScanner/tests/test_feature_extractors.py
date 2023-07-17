@@ -10,9 +10,12 @@ import unittest
 import numpy as np
 
 from PhageScanner.main.exceptions import IncorrectValueError, ProteinError
-from PhageScanner.main.feature_extractors import (AACExtractor, ATCExtractor,
-                                                  DPCExtractor,
-                                                  ProteinFeatureAggregator)
+from PhageScanner.main.feature_extractors import (
+    AACExtractor,
+    ATCExtractor,
+    DPCExtractor,
+    ProteinFeatureAggregator,
+)
 
 
 class TestATCExtractor(unittest.TestCase):

@@ -16,9 +16,11 @@ from typing import Dict, List, Union
 import pandas as pd
 import yaml
 
-from PhageScanner.main.exceptions import (IncorrectValueError,
-                                          IncorrectYamlError,
-                                          PipelineCommandError)
+from PhageScanner.main.exceptions import (
+    IncorrectValueError,
+    IncorrectYamlError,
+    PipelineCommandError,
+)
 
 
 def get_filename(filename: Union[str, Path]):
@@ -56,7 +58,13 @@ class CommandLineUtils:
         # get the output of the command
         output, error = process.communicate()
 
-        if len(error) > 0:
+        # NOTE: ignoring errors from phanotate since it throws errors without tscan
+        # NOTE: ignoring errors from megahit since it throws errors even on success.
+        if (
+            len(error) > 0
+            and not command.startswith("phanotate.py")
+            and not command.startswith("megahit")
+        ):
             error_message = "There was an error executing a shell command.\n"
             error_message += f"The error was: \n\n{error}\n\n"
             error_message += f"The command was: \n\n{command}\n\n"
@@ -153,6 +161,14 @@ class DatabaseConfig(ConfigUtils):
         """Get the clustering identity threshold"""
         return self.config["clustering"]["clustering-percentage"] / 100
 
+    def get_k_partition_count(self) -> int:
+        """Get the number of partitions to use for k-fold CV."""
+        return self.config["clustering"]["k_partitions"]
+
+    def get_deduplication_threshold(self) -> int:
+        """Get the number of partitions to use for k-fold CV."""
+        return self.config["clustering"]["deduplication-threshold"] / 100
+
 
 class TrainingConfig(ConfigUtils):
     """The training pipeline configuration object.
@@ -202,12 +218,12 @@ class TrainingConfig(ConfigUtils):
                         parameters = None
                     yield feature_name, parameters
 
-    def is_sequential(self, model_name):
+    def sequential(self, model_name):
         """Return True if the model takes in sequential data."""
         for m in self.config["models"]:
             if m["name"] == model_name:
-                if m["sequential"]:
-                    return True
+                if m["model_info"]["sequential"]:
+                    return m["model_info"]["sequential"]
         return False
 
     def get_predictor_model_name(self, model_name):
@@ -257,6 +273,18 @@ class PredictionConfig(ConfigUtils):
     def get_orffinder_name(self):
         """Get the name of the orffinder from the configuration."""
         return self.config["orffinder"]
+
+    def get_probability_threshold(self):
+        """Get the probability needed for classifying proteins."""
+        return float(self.config["probability_threshold"])
+
+    def sequential(self, model_name):
+        """Return True if the model takes in sequential data."""
+        for m in self.config["models"]:
+            if m["name"] == model_name:
+                if m["model_info"]["sequential"]:
+                    return m["model_info"]["sequential"]
+        return False
 
     def get_model_path(self, model_name):
         """Get the model path from the model name."""
@@ -321,6 +349,11 @@ class CSVUtils:
             while f.readline() is not None:
                 lines += 1
         return lines
+
+    @staticmethod
+    def csv_to_dataframe(csv_file: Path):
+        """Convert a CSV file to a dataframe."""
+        return pd.read_csv(csv_file, sep=",")
 
     @staticmethod
     def appendcsv(
