@@ -31,34 +31,36 @@ There are several command line tools that PhageScanner uses within the pipeline:
 
 
 ## Pipeline Usage
-PhageScanner is a command line tool and machine learning pipeline for automating the process of finding genes of interest. In particular, it is useful for unifying the efforts of identifying Phage Virion Proteins, and can speed up the process of finding models and using them on metagenomic data, genomes and proteins.
+There are three fundamental pipelines in the PhageScanner tool. Each of these pipelines feeds into the next: (1) Download the training dataset, (2) Training the machine learning models, (3) Using the models to annotate genomes and metagenomics datasets. Each pipelines is configurable to allow end-users extreme flexibility in creating new models to predict new variations of protein classes (ex. "Toxic Protein", "Phage Virion Protein", "Lysogenic"). Each example list below should be ran from the root directory if running the commands "as-is".
 
 1. Build the database
     - Basic usage
     ```
-    python phagescanner.py database -c Path/To/Config.yaml -o path/to/output/directory/ -n name_for_files_<classname>
+    python phagescanner.py database [-h] -c CONFIG -o OUT [--cdhit_path CDHIT_PATH] [-v VERBOSITY]
     ```
     - Example (multiclass pvps)
     ```
-    python phagescanner.py database -c configs/multiclass_pvps/database_multiclass.yaml -o ./benchmarking_database/ -n benchmarking -v info
+    python phagescanner.py database -c configs/multiclass_config.yaml -o ./multiclass_database/ -v info
     ```
 2. Training and Test ML models
     - Basic usage
     ```
-    python phagescanner.py train -c Path/To/Config.yaml -o path/to/output/directory/ -n name_for_files_<classname> -v debug
+    python phagescanner.py train [-h] -c CONFIG -o OUT -db DATABASE_CSV_PATH [-v VERBOSITY]
     ```
     - Example (multiclass pvps)
     ```
-    python phagescanner.py train -c configs/multiclass_pvps/training_multiclass.yaml -o training_output -n TRAIN -v debug
+    python phagescanner.py train -c configs/multiclass_config.yaml -o training_output --database_csv_path ./multiclass_database/ -v debug
     ```
 3. Run on metagenomic data, genomes or proteins
     - Basic usage
     ```
-    python phagescanner.py predict -c Path/To/Config.yaml -o path/to/output/directory/ -t ("reads", "genome", or "protein") -n name_for_files_<classname> -i <input file> -v debug
+    python phagescanner.py predict [-h] -i INPUT -t TYPE ("reads", "genome", or "protein") -c CONFIG -o training_output -n NAME -tdir TRAINING_OUTPUT
+                                [--megahit_path MEGAHIT_PATH] [--phanotate_path PHANOTATE_PATH]
+                                [--probability_threshold PROBABILITY_THRESHOLD] [-v VERBOSITY]
     ```
     - Example (genomes)
     ```
-    python phagescanner.py predict -c configs/multiclass_pvps/prediction_multiclass.yaml  -t "genome" -o prediction_output -n "genomes" -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
+    python phagescanner.py predict -c configs/multiclass_config.yaml  -t "genome" -o prediction_output -n "genomes" -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
     ```
 
 # PhageScanner GUI
