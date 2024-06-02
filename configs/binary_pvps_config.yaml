@@ -1,0 +1,43 @@
+clustering:
+  deduplication-threshold: 100
+  clustering-percentage: 90
+  k_partitions: 5 # number of partitions in k-fold cross validation
+classes:
+  - name: PVP
+    uniprot: "capsid AND cc_subcellular_location: virion AND reviewed: true"
+    entrez: "bacteriophage[Organism] AND ((shaft[Title] OR sheath[Title]) AND tail[Title]) OR head-tail[Title] OR tail fiber[Title] OR portal[Title] OR minor tail[Title] OR major tail[Title] OR baseplate[Title] OR minor capsid[Title] OR major capsid[Title])"
+  - name: non-PVP
+    uniprot: "capsid NOT cc_subcellular_location: virion AND reviewed: true"
+    entrez: "bacteriophage[Organism] NOT (bacteriophage[Organism] AND ((shaft[Title] OR sheath[Title]) AND tail[Title]) OR head-tail[Title] OR tail fiber[Title] OR portal[Title] OR minor tail[Title] OR major tail[Title] OR baseplate[Title] OR minor capsid[Title] OR major capsid[Title]))"
+models:
+  - name: "PVP-SVM (SVM)"
+    model_info:
+      model_name: "SVM"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "DPC"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          gap_size: 0
+      - name: "AAC"
+      - name: "ATC"
+      - name: "CTD"
+      - name: "PCP"
+  - name: "PhageScanner (RNN)"
+    model_info:
+      model_name: "RNN"
+      sequential: 3
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "DPC"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          gap_size: 0
+  - name: "DeePVP (CNN)"
+    model_info:
+      model_name: "CNN"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "SEQUENTIALONEHOT"
+classes:
+  - name: PVP # No spaces. Can differ between pipelines.
+    final_csv: "binary_database/benchmarking_PVP.csv" # local path.
+  - name: non-PVP
+    final_csv: "binary_database/benchmarking_non-PVP.csv"

@@ -1,0 +1,35 @@
+clustering:
+  deduplication-threshold: 99
+  clustering-percentage: 90
+  k_partitions: 5 # number of partitions in k-fold cross validation
+classes:
+  - name: Lysin
+    uniprot: "endolysin"
+    entrez: "endolysin[Title]"
+  - name: non-Lysin
+    uniprot: "cc_subcellular_location: virion NOT endolysin"
+    entrez: "bacteriophage[Organism]"
+models:
+  # - name: "BLAST"
+  #   model_info:
+  #     model_name: "BLAST"
+  #     sequential: false
+  #   features:
+  #     - name: "PROTEINSEQ" # only option for blast
+  - name: "Baseline Model - Logistic Regression"
+    model_info:
+      model_name: "LOGREG"
+      sequential: false
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "AAC"
+      - name: "ATC"
+      - name: "CTD"
+      - name: "PCP"
+  - name: "PhageScanner (RNN)"
+    model_info:
+      model_name: "RNN"
+      sequential: 3
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "DPC"
+        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+          gap_size: 0
