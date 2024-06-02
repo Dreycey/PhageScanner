@@ -4,6 +4,7 @@ Description:
     This module contains the tests for the
     ClusteringAdapter module.
 """
+
 import unittest
 from pathlib import Path
 from unittest.mock import patch

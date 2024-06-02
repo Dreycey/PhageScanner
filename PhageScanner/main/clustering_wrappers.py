@@ -4,6 +4,7 @@ Description:
     This module contains wrappers around command line tools
     for performing clustering on proteins in a fasta file.
 """
+
 import logging
 from abc import ABC, abstractmethod
 from enum import Enum

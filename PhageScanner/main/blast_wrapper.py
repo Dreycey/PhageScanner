@@ -6,6 +6,7 @@ Description:
     using a training dataset, and allow for classification
     based on the training data.
 """
+
 from pathlib import Path
 
 from PhageScanner.main.exceptions import IncorrectValueError

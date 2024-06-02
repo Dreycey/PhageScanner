@@ -6,18 +6,31 @@ quickly implemented and tested.
 
 For help: python phagescanner.py -h
 """
-import os
 from enum import Enum
 import argparse
 import sys
-import PhageScanner.main.pipelines as pipelines
-from PhageScanner.main.pipelines import PipelineNames
-import PhageScanner.main.utils as utils
+
 from pathlib import Path
 import logging
 
+import PhageScanner.main.utils as utils
+from PhageScanner.main.pipelines import (
+    database_pipeline,
+    prediction_pipeline,
+    training_pipeline,
+)
 
 
+class PipelineNames(Enum):
+    """Names of pipeline adapters.
+
+    Description:
+        This enum contains the names of each pipeline.
+    """
+
+    database = "database"
+    train = "train"
+    predict = "predict"
 
 def parseArgs(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -151,32 +164,29 @@ def main():
         print(f"Note: This step is time consuming.")
         utils.LogUtils.configure_logging(args.out / "database_pipeline.log", args.verbosity)
         logging.info("Database creation pipeline")
-        db_pipeline = pipelines.DatabasePipeline(config=args.config,
-                                                 pipeline_name=args.name,
-                                                 directory=args.out
-                                                 )
+        db_pipeline = database_pipeline.DatabasePipeline(config=args.config,
+                                                         pipeline_name=args.name,
+                                                         directory=args.out)
         db_pipeline.run()
 
     def run_train_pipeline():
         print(f"Running training pipeline...")
         utils.LogUtils.configure_logging(args.out / "training_pipeline.log", args.verbosity)
         logging.info("Training and Testing pipeline")
-        train_pipeline = pipelines.TrainingPipeline(config=args.config,
-                                                 pipeline_name=args.name,
-                                                 directory=args.out
-                                                 )
+        train_pipeline = training_pipeline.TrainingPipeline(config=args.config,
+                                                            pipeline_name=args.name,
+                                                            directory=args.out)
         train_pipeline.run()
 
     def run_predict_pipeline():
         print(f"Running prediction pipeline...")
         utils.LogUtils.configure_logging(args.out / "prediction_pipeline.log", args.verbosity)
         logging.info("Prediction pipeline")
-        train_pipeline = pipelines.PredictionPipeline(input=args.input,
-                                                      input_type=args.type,
-                                                      config=args.config,
-                                                      pipeline_name=args.name,
-                                                      directory=args.out
-                                                     )
+        train_pipeline = prediction_pipeline.PredictionPipeline(input=args.input,
+                                                                input_type=args.type,
+                                                                config=args.config,
+                                                                pipeline_name=args.name,
+                                                                directory=args.out)
         train_pipeline.run()
 
     # arguments

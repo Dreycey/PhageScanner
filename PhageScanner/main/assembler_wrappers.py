@@ -4,6 +4,7 @@ Description:
     This module contains wrappers around command line tools
     for assembling reads.
 """
+
 import logging
 import os
 import shutil

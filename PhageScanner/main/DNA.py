@@ -5,6 +5,7 @@ Description:
     with strings representing biological entities. This
     includes DNA and Protein sequences.
 """
+
 from dataclasses import dataclass
 from typing import List
 

@@ -5,6 +5,7 @@ Description:
     DatabaseAdapter module. It tests each class that
     implements the the DatabaseAdapter abstract interface.
 """
+
 import unittest
 from unittest.mock import patch
 

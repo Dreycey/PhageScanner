@@ -5,6 +5,7 @@ Description:
     to ensure that the feature extraction is working
     as expected.
 """
+
 import unittest
 
 import numpy as np

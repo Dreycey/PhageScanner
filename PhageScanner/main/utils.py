@@ -6,6 +6,7 @@ Description:
     files, downloading serialized objects, uploading
     serialized objects, and other various methods.
 """
+
 import csv
 import logging
 import os
@@ -60,12 +61,10 @@ class CommandLineUtils:
 
         # NOTE: ignoring errors from phanotate since it throws errors without tscan.
         # NOTE: ignoring errors from megahit since it throws errors even on success.
-        # NOTE: pblast throws (i.e. returns 1) even for warnings.
         if (
             len(error) > 0
             and not command.startswith("phanotate.py")
             and not command.startswith("megahit")
-            and not "Warning" in error
         ):
             error_message = "There was an error executing a shell command.\n"
             error_message += f"The error was: \n\n{error}\n\n"

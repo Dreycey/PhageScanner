@@ -4,6 +4,7 @@ Description:
     The testing framework for the phagescanner utils
     is contained within this module.
 """
+
 import os
 import unittest
 from pathlib import Path

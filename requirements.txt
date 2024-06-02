@@ -12,9 +12,7 @@ black==23.1.0
 tox==4.15.0
 coverage==7.5.3
 interrogate==1.7.0
-
-# bioinformatics tools
-phanotate==1.6.5
+tox==4.15.0
 
 # machine learning libraries
 keras==3.3.3

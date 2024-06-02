@@ -6,6 +6,7 @@ Description:
     on the input contigs or genomes within the
     PhageScanner ML pipeline.
 """
+
 import os
 import tkinter as tk
 from pathlib import Path

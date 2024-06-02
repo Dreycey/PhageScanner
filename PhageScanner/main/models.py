@@ -7,6 +7,7 @@ Description:
     This class also contains methods for evaluating the
     models performance.
 """
+
 import logging
 import os
 import random
@@ -318,7 +319,7 @@ class FFNNMultiClassModel(KerasModel):
         model.add(Dense(number_of_classes, activation="softmax"))
 
         # compile the model
-        opt = Adam(beta_1=0.9, beta_2=0.999, amsgrad=False) # lr=0.001, decay=0.0,
+        opt = Adam(beta_1=0.9, beta_2=0.999, amsgrad=False)  # lr=0.001, decay=0.0,
         model.compile(
             loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["accuracy"]
         )

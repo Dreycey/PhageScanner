@@ -8,6 +8,7 @@ Patterns:
     Strategy pattern is used to give all databases
     a query method that returns the same type.
 """
+
 import logging
 import re
 from abc import ABC, abstractmethod
