@@ -13,6 +13,7 @@
 PhageScanner is a command line tool for identifying phage virion proteins (PVPs) using metagenomic sequencing data as input.  For comprehensive information about installation and usage, please visit the [PhageScanner Wiki](https://github.com/Dreycey/PhageScanner/wiki).
 
 Subscribe to email list: <a href="http://eepurl.com/ivMTlY"><img alt="Subscribe" src="https://img.shields.io/badge/Subscribe-green"></a> 
+
 Unsubscribe from email list: <a href="https://gmail.us13.list-manage.com/unsubscribe?u=d11fd2924efec07fab20ba388&id=a7720cf873"><img alt="Unsubscribe" src="https://img.shields.io/badge/Unsubscribe-red"></a>
 
 ## Installation

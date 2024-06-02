@@ -1,6 +1,7 @@
 # direct dependencies
 beautifulsoup4==4.11.1
 biopython==1.81
+joblib==1.4.0
 numpy==1.26.4
 pandas==2.2.2
 pyyaml==6.0.1
@@ -9,7 +10,6 @@ tqdm==4.66.4 # perhaps this can be removed.
 
 # used for testing
 black==23.1.0
-tox==4.15.0
 coverage==7.5.3
 interrogate==1.7.0
 tox==4.15.0
@@ -17,12 +17,11 @@ tox==4.15.0
 # machine learning libraries
 keras==3.3.3
 scikit-learn==1.5.0
-tensorflow==2.16.1 # the biggest library (what about lite??)
+tensorflow==2.16.1
 
 # gui
 dna-features-viewer==3.1.3
 
 # unsure
-joblib==1.4.0
-tomli==2.0.1
-toml==0.10.2
+#tomli==2.0.1
+#toml==0.10.2
