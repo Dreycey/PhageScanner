@@ -99,26 +99,6 @@ class TestDatabaseConfig(unittest.TestCase):
             msg="The classes data doesn't match the expected result.",
         )
 
-    def test_get_clustering_tool(self):
-        """Test get_clustering_tool method successfully reads tool name."""
-        tool_name = self.database_config.get_clustering_tool()
-
-        self.assertEqual(
-            tool_name,
-            self.test_yaml_data["clustering"]["name"],
-            msg="The tool name doesn't match the expected result.",
-        )
-
-    def test_get_clustering_threshold(self):
-        """Test get_clustering_threshold method successfully obtains the threshold."""
-        threshold = self.database_config.get_clustering_threshold()
-
-        self.assertEqual(
-            threshold,
-            self.test_yaml_data["clustering"]["clustering-percentage"] / 100,
-            msg="The threshold doesn't match the expected result.",
-        )
-
 
 class TestCommandLineUtils(unittest.TestCase):
     """Test the command line utility."""

@@ -21,14 +21,18 @@ class DatabasePipeline(Pipeline):
         and preprocessing steps for the protein retrieval.
     """
 
-    def __init__(self, config: Path, protein_clustering_tool_path: Path, directory: Path):
+    def __init__(
+        self, config: Path, protein_clustering_tool_path: Path, directory: Path
+    ):
         """Initialize the database pipeline."""
         logging.info("Running DatabasePipeline | Creating pipeline...")
         self.config_object = utils.DatabaseConfig(config)
         self.directory = directory
 
         # get clustering tool
-        self.clustering_tool_adapter = ClusteringWrapperNames.get_clustering_tool(protein_clustering_tool_path)
+        self.clustering_tool_adapter = ClusteringWrapperNames.get_clustering_tool(
+            protein_clustering_tool_path
+        )
 
         # create directory if it doesn't exist
         if not os.path.exists(self.directory):
@@ -49,9 +53,7 @@ class DatabasePipeline(Pipeline):
         if identity:
             identity = int(100 * identity)
             identity_str = f"_{identity}"
-        path = self.directory / (
-             class_name + f"{identity_str}" + ".fasta"
-        )
+        path = self.directory / (class_name + f"{identity_str}" + ".fasta")
         return path
 
     def get_proteins_from_db_adapters(self):
@@ -143,7 +145,6 @@ class DatabasePipeline(Pipeline):
                 3. Cluster the proteins in each fasta file.
                 4. Save information to CSV file.
         """
-
         # for each class fasta file, cluster the proteins.
         for class_info in self.config_object.get_classes():
             class_name = class_info.get("name")  # TODO: move to config_object
@@ -251,7 +252,9 @@ class DatabasePipeline(Pipeline):
             del cluster_graph
 
             # get accesion ids for each clusters reference/centroid protein.
-            output_file = self.config_object.get_csv_path_from_name(class_name, self.directory)
+            output_file = self.config_object.get_csv_path_from_name(
+                class_name, self.directory
+            )
             with open(output_file, "w") as output_csv:
                 output_csv.write("partition,accession,protein,protein_length\n")
                 for accession, protein in FastaUtils.get_proteins(fasta_non_clustered):

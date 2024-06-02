@@ -39,7 +39,7 @@ class ClusteringWrapperNames(Enum):
             exception_string = (
                 "The Clustering tool requested is not available. ",
                 f"The requested tool in the Yaml is: {tool_path.name}. ",
-                f"The options available are: {tools_available}"
+                f"The options available are: {tools_available}",
             )
             raise IncorrectYamlError(exception_string)
         return wrapper(tool_path=tool_path)

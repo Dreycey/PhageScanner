@@ -170,6 +170,7 @@ class DatabaseConfig(ConfigUtils):
         """Get the csv path for proteins after clustering."""
         return dbdirectory / Path(class_name + ".csv")
 
+
 class TrainingConfig(ConfigUtils):
     """The training pipeline configuration object.
 
@@ -239,6 +240,7 @@ class TrainingConfig(ConfigUtils):
     def get_csv_path_from_name(self, class_name, dbdirectory):
         """Get the csv path for proteins after clustering."""
         return dbdirectory / Path(class_name + ".csv")
+
 
 class PredictionConfig(ConfigUtils):
     """The prediction pipeline configuration object.

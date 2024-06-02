@@ -64,7 +64,9 @@ class TrainingPipeline(Pipeline):
         for class_name in model_classes:
             # Read the csv file into a pandas DataFrame
             class_name = class_name.get("name")
-            class_path = self.config_object.get_csv_path_from_name(class_name, self.db_directory)
+            class_path = self.config_object.get_csv_path_from_name(
+                class_name, self.db_directory
+            )
             df = pd.read_csv(class_path)
 
             # Add a new column 'class' with the provided value

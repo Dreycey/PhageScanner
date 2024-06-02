@@ -42,7 +42,7 @@ class OrfFinderWrapperNames(Enum):
             exception_string = (
                 "The ORF Finding tool requested is not available. ",
                 f"The requested tool in the Yaml is: {tool_path.name}. ",
-                f"The options available are: {tools_available}"
+                f"The options available are: {tools_available}",
             )
             raise IncorrectYamlError(exception_string)
         return wrapper(tool_path=tool_path)
@@ -93,9 +93,10 @@ class PhanotateWrapper(OrfFinderWrapper):
         return outpath
 
     @staticmethod
-    def get_info_from_name(fasta_entry_name: str): # TODO: account for reverse compliment 
+    def get_info_from_name(
+        fasta_entry_name: str,
+    ):  # TODO: account for reverse compliment ("complement" in fasta_entry_name)
         """Get information from the fasta entry name."""
-        # Updated pattern to better handle various identifier formats and exponential notation
         pattern = (
             r"([^_\s]+)_CDS_\[(\d+)\.\.(\d+)\] \[note=score:(-?\d+\.\d+[eE][+-]\d+)\]"
         )
@@ -107,8 +108,6 @@ class PhanotateWrapper(OrfFinderWrapper):
             start_pos = int(match.group(2))
             end_pos = int(match.group(3))
             score = float(match.group(4))
-
-            is_reverse_complement = "complement" in fasta_entry_name
 
             return accession_id, start_pos, end_pos, score
         else:

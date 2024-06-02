@@ -17,7 +17,7 @@ class TestCDHitAdapter(unittest.TestCase):
 
     def setUp(self):
         """Create input for testing the CDHitAdapter."""
-        self.cdhit_adapter = CDHitWrapper(threads=4)
+        self.cdhit_adapter = CDHitWrapper(tool_path="", threads=4)
         self.fasta_file = Path("test.fasta")
         self.outpath = Path("out.clstr")
         self.identity = 90

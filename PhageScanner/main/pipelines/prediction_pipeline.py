@@ -1,6 +1,5 @@
 """The prediction pipeline uses trained models to annotate genomes."""
 
-import csv
 import logging
 import os
 from enum import Enum
@@ -131,7 +130,9 @@ class PredictionPipeline(Pipeline):
             return orf_file_prefix_proteins
 
         # Get ORFs.
-        orf_file_path = self.orffinder.find_orfs(fasta_path=self.input, outpath=orf_path)
+        orf_file_path = self.orffinder.find_orfs(
+            fasta_path=self.input, outpath=orf_path
+        )
 
         # get length of each contig/genome
         accession2length = {}
@@ -143,8 +144,8 @@ class PredictionPipeline(Pipeline):
         for orf_name, orf_sequence in FastaUtils.get_proteins(
             orf_file_path, withfullname=True
         ):
-            accession_id, start_pos, stop_pos, score = self.orffinder.get_info_from_name(
-                orf_name
+            accession_id, start_pos, stop_pos, score = (
+                self.orffinder.get_info_from_name(orf_name)
             )
 
             # save to output file.
@@ -186,7 +187,9 @@ class PredictionPipeline(Pipeline):
             self.extract_feature_vector(model)
 
             # instantiate the model.
-            model_path = self.config_object.get_model_path(model, self.training_output_directory)
+            model_path = self.config_object.get_model_path(
+                model, self.training_output_directory
+            )
             model_predictor_name = self.config_object.get_predictor_model_name(model)
             model_object = ModelNames.get_model(model_predictor_name)
             model_object = model_object.load(model_path)

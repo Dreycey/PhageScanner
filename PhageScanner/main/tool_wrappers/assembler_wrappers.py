@@ -40,7 +40,7 @@ class AssemblyWrapperNames(Enum):
             exception_string = (
                 "The Assembly tool requested in the Yaml File is not available. ",
                 f"The requested tool in the Yaml is: {tool_path.name}. ",
-                f"The options available are: {tools_available}"
+                f"The options available are: {tools_available}",
             )
             raise IncorrectYamlError(exception_string)
         return wrapper(tool_path=tool_path)
