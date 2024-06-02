@@ -1,11 +1,11 @@
 models:
-  - name: "BLAST"
-    model_info:
-      model_name: "BLAST"
-      sequential: false
-    feature_selection: false # Options:
-    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-      - name: "PROTEINSEQ"
+  # - name: "BLAST"
+  #   model_info:
+  #     model_name: "BLAST"
+  #     sequential: false
+  #   feature_selection: false # Options:
+  #   features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+  #     - name: "PROTEINSEQ"
   - name: "PhANNs (FFNN)"
     model_info:
       model_name: "FFNN"
@@ -71,4 +71,4 @@ classes:
   - name: HTJ
     final_csv: "benchmarking_database/benchmarking_HTJ.csv"
   - name: Other
-    final_csv: "benchmarking_database/BINARY_non-PVP.csv"
+    final_csv: "benchmarking_database/benchmarking_non-PVP.csv"

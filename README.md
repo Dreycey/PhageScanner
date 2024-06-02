@@ -10,29 +10,29 @@
 
 # PhageScanner
 
-PhageScanner is a command line tool for identifying phage virion proteins (PVPs) using metagenomic sequencing data as input.
+PhageScanner is a command line tool for identifying phage virion proteins (PVPs) using metagenomic sequencing data as input.  For comprehensive information about installation and usage, please visit the [PhageScanner Wiki](https://github.com/Dreycey/PhageScanner/wiki).
 
 Subscribe to email list: <a href="http://eepurl.com/ivMTlY"><img alt="Subscribe" src="https://img.shields.io/badge/Subscribe-green"></a> 
 Unsubscribe from email list: <a href="https://gmail.us13.list-manage.com/unsubscribe?u=d11fd2924efec07fab20ba388&id=a7720cf873"><img alt="Unsubscribe" src="https://img.shields.io/badge/Unsubscribe-red"></a>
 
 ## Installation
 
-To setup the conda environment, use the following command once conda is installed locally.
+**NOTE**: PhageScanner is only available on 64-bit macOS and Ubuntu linux. To run the tool on windows, we recommend installing the *Ubuntu* Windows Subsystem for Linux (WSL). This limitation is due to some of the underlying tools PhageScanner uses, including: cd-hit, phanotate, and megahit. These all have C++ dependencies that are not inherently available on windows.
 
+### Installing direct dependencies
+The python dependencies can be installed using the `requirements.txt` file provided in the primary repository.
 ```
-conda env create -f environment.yml;
+python -m pip install -r requirements.txt
 ```
 
-It can now activated using:
-```
-conda activate phagescanner
-```
+### Installing command line tool dependencies
+There are several command line tools that PhageScanner uses within the pipeline: (1) CD-HIT, (2) BLAST, (3) Megahit, and (4) Phanotate. Many of these tools are commonly-used bioinformatics tools that you may already have installed. However, please refer to the [PhageScanner Wiki](https://github.com/Dreycey/PhageScanner/wiki) if you'd like more guidance installing these dependencies.
+
 
 ## Pipeline Usage
 PhageScanner is a command line tool and machine learning pipeline for automating the process of finding genes of interest. In particular, it is useful for unifying the efforts of identifying Phage Virion Proteins, and can speed up the process of finding models and using them on metagenomic data, genomes and proteins.
 
 1. Build the database
-
     - Basic usage
     ```
     python phagescanner.py database -c Path/To/Config.yaml -o path/to/output/directory/ -n name_for_files_<classname>
@@ -40,15 +40,6 @@ PhageScanner is a command line tool and machine learning pipeline for automating
     - Example (multiclass pvps)
     ```
     python phagescanner.py database -c configs/multiclass_pvps/database_multiclass.yaml -o ./benchmarking_database/ -n benchmarking -v info
-
-    ```
-    - Example (binary pvps)
-    ```
-    python phagescanner.py database -c configs/binary_pvps/database_binary.yaml -o ./binary_database/ -n benchmarking -v info
-    ```
-    - Example (toxin proteins)
-    ```
-    python phagescanner.py database -c configs/phage_toxins/database_toxins.yaml -o ./toxin_database/ -n benchmarking -v info
     ```
 2. Training and Test ML models
     - Basic usage
@@ -59,18 +50,6 @@ PhageScanner is a command line tool and machine learning pipeline for automating
     ```
     python phagescanner.py train -c configs/multiclass_pvps/training_multiclass.yaml -o training_output -n TRAIN -v debug
     ```
-    - Example (binary pvps)
-    ```
-    python phagescanner.py train -c configs/binary_pvps/training_binary.yaml -o binary_training_output -n TRAIN -v debug
-    ```
-    - Example (toxin proteins)
-    ```
-    python phagescanner.py train -c configs/phage_toxins/training_toxins.yaml -o phagetoxin_training -n TRAIN -v debug
-    ```
-    - Example (testing different features using baseline, logistic regression model)
-    ```
-    python phagescanner.py train -c configs/multiclass_pvps/feature_testing.yaml -o feature_testing -n TRAIN -v debug
-    ```
 3. Run on metagenomic data, genomes or proteins
     - Basic usage
     ```
@@ -78,15 +57,7 @@ PhageScanner is a command line tool and machine learning pipeline for automating
     ```
     - Example (genomes)
     ```
-    python phagescanner.py predict -c configs/prediction.yaml -t "genome" -o prediction_output -n "genomes" -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
-    ```
-    - Example (reads)
-    ```
-    python phagescanner.py predict -c configs/prediction.yaml -t "reads" -o prediction_output -n "OUTPREFIX" -i examples/test_c100000_n10_e0.0.fq -v debug
-    ```
-    - Example (proteins)
-    ```
-    python phagescanner.py predict -c configs/prediction.yaml -t "protein" -o prediction_output -n OUTPREFIX -i examples/Phage_Collar_proteins.fa -v debug
+    python phagescanner.py predict -c configs/multiclass_pvps/prediction_multiclass.yaml  -t "genome" -o prediction_output -n "genomes" -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
     ```
 
 # PhageScanner GUI
@@ -109,8 +80,7 @@ PhageScanner has a GUI for viewing the results of the prediction pipeline to all
 2. Open the GUI using the path to the prediction output and the images path.
     - Open the GUI
     ```
-    python phagescanner_gui.py gui -p prediction_output/genomes_predictions.csv -o output_i
-mages/
+    python phagescanner_gui.py gui -p prediction_output/genomes_predictions.csv -o output_images/
     ```
 
 # Notes

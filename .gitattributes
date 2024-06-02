@@ -1,1 +1,7 @@
 reports/ linguist-vendored
+
+# Ignore all misc files
+logs/ export-ignore
+
+# Ignore generated reports
+reports/ export-ignore

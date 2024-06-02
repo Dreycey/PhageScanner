@@ -39,7 +39,7 @@ class LogoFrame(tk.Frame):
         desired_height = 100
         ratio = desired_height / logo_image.height
         desired_width = int(logo_image.width * ratio)
-        logo_image = logo_image.resize((desired_width, desired_height), Image.ANTIALIAS)
+        logo_image = logo_image.resize((desired_width, desired_height), Image.LANCZOS)
 
         # convert image for tkinter
         self.logo_image_tk = ImageTk.PhotoImage(logo_image)
@@ -89,7 +89,7 @@ class GenomeFrame(tk.Frame):
         # resize the image w/o changing height-width ratio
         ratio = self.desired_height / img.height
         desired_width = int(img.width * ratio)
-        img = img.resize((desired_width, self.desired_height), Image.ANTIALIAS)
+        img = img.resize((desired_width, self.desired_height), Image.LANCZOS)
 
         # convert image for tkinter
         self.imgtk = ImageTk.PhotoImage(img)

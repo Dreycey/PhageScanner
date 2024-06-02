@@ -11,6 +11,7 @@ import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
+import re
 
 from PhageScanner.main.exceptions import IncorrectYamlError, MissingFileError
 from PhageScanner.main.utils import CommandLineUtils
@@ -93,8 +94,15 @@ class PhanotateWrapper(OrfFinderWrapper):
     @staticmethod
     def get_info_from_name(fasta_entry_name: str):
         """Get information from the fasta entry name."""
-        accession_id, start_pos, score = fasta_entry_name.split(" ")
-        start_pos = int(start_pos.replace("[START=", "").replace("]", ""))
-        score = float(score.replace("[SCORE=", "").replace("]", ""))
-        accession_id = ".".join(accession_id.split(".")[:-1])
-        return accession_id, start_pos, score
+
+        # Pattern expects Phanotate output of "NC_022762.1_CDS_[4760..5803] [note=score:-1.440691E+08]"
+        pattern = r"(\w+\.\d+)_CDS_\[(\d+)\.\.(\d+)\] \[note=score:(-?\d+\.\d+E[+-]\d+)\]"
+        logging.info(fasta_entry_name)
+        match = re.search(pattern, fasta_entry_name)
+
+        accession_id = match.group(1)
+        start_pos = int(match.group(2))
+        end_pos = int(match.group(3))
+        score = float(match.group(4))
+
+        return accession_id, start_pos, end_pos, score

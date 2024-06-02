@@ -832,8 +832,7 @@ class PredictionPipeline(Pipeline):
         for orf_name, orf_sequence in FastaUtils.get_proteins(
             orf_file_path, withfullname=True
         ):
-            accession_id, start_pos, score = orffinder.get_info_from_name(orf_name)
-            stop_pos = start_pos + len(orf_sequence)
+            accession_id, start_pos, stop_pos, score = orffinder.get_info_from_name(orf_name)
 
             # save to output file.
             orf_results = {
@@ -894,15 +893,13 @@ class PredictionPipeline(Pipeline):
             # use probabilities threshold.
             if len(probabilities) == len(predictions):
                 probabilities_series = pd.Series(probabilities)
-                self.dataframe[model].mask(
-                    probabilities_series
-                    < self.config_object.get_probability_threshold(),
-                    "No prediction",
-                    inplace=True,
+                self.dataframe[model] = self.dataframe[model].mask(
+                    probabilities_series < self.config_object.get_probability_threshold(),
+                    -1
                 )
 
             # replace values with class names.
-            self.dataframe[model].replace(index2class, inplace=True)
+            self.dataframe[model] = self.dataframe[model].replace(index2class)
 
     def run(self):
         """Run the prediction pipeline."""
