@@ -24,13 +24,13 @@ class TrainingPipeline(Pipeline):
         input config.
     """
 
-    def __init__(self, config: Path, pipeline_name: str, directory: Path):
+    def __init__(self, config: Path, db_directory: Path, directory: Path):
         """Initialize the training pipeline."""
         logging.info("Running TrainingPipeline | Creating pipeline...")
         self.config_object = utils.TrainingConfig(config)
-        self.pipeline_name = pipeline_name
         self.directory = directory
         self.number_of_classes = 0  # updated during pipeline run.
+        self.db_directory = db_directory
 
         # pandas dataframe holds all of the training data
         self.dataframe = pd.DataFrame()
@@ -61,8 +61,10 @@ class TrainingPipeline(Pipeline):
 
         # save number of classes
         self.number_of_classes = len(model_classes)
-        for class_name, class_path in model_classes:
+        for class_name in model_classes:
             # Read the csv file into a pandas DataFrame
+            class_name = class_name.get("name")
+            class_path = self.config_object.get_csv_path_from_name(class_name, self.db_directory)
             df = pd.read_csv(class_path)
 
             # Add a new column 'class' with the provided value

@@ -21,12 +21,14 @@ class DatabasePipeline(Pipeline):
         and preprocessing steps for the protein retrieval.
     """
 
-    def __init__(self, config: Path, pipeline_name: str, directory: Path):
+    def __init__(self, config: Path, protein_clustering_tool_path: Path, directory: Path):
         """Initialize the database pipeline."""
         logging.info("Running DatabasePipeline | Creating pipeline...")
         self.config_object = utils.DatabaseConfig(config)
-        self.pipeline_name = pipeline_name
         self.directory = directory
+
+        # get clustering tool
+        self.clustering_tool_adapter = ClusteringWrapperNames.get_clustering_tool(protein_clustering_tool_path)
 
         # create directory if it doesn't exist
         if not os.path.exists(self.directory):
@@ -48,14 +50,8 @@ class DatabasePipeline(Pipeline):
             identity = int(100 * identity)
             identity_str = f"_{identity}"
         path = self.directory / (
-            self.pipeline_name + "_" + class_name + f"{identity_str}" + ".fasta"
+             class_name + f"{identity_str}" + ".fasta"
         )
-        return path
-
-    def get_partition_csv_path(self, class_name):
-        """Get the fasta path for proteins after clustering."""
-        full = self.pipeline_name + "_" + class_name + ".csv"
-        path = self.directory / full
         return path
 
     def get_proteins_from_db_adapters(self):
@@ -147,8 +143,6 @@ class DatabasePipeline(Pipeline):
                 3. Cluster the proteins in each fasta file.
                 4. Save information to CSV file.
         """
-        clustering_tool = self.config_object.get_clustering_tool()
-        clustering_adapter = ClusteringWrapperNames.get_clustering_tool(clustering_tool)
 
         # for each class fasta file, cluster the proteins.
         for class_info in self.config_object.get_classes():
@@ -164,7 +158,7 @@ class DatabasePipeline(Pipeline):
             )
 
             # cluster proteins.
-            clustering_adapter.cluster(
+            self.clustering_tool_adapter.cluster(
                 fasta_file=input_file_path,
                 outpath=output_file_path,
                 identity=clustering_identity_threshold,
@@ -208,7 +202,7 @@ class DatabasePipeline(Pipeline):
                 4. sequence
         """
         for class_info in self.config_object.get_classes():
-            class_name = class_info.get("name")  # TODO: move to config_object
+            class_name = class_info.get("name")
             logging.info(f"\t Partitioning class {k_partitions}-fold: {class_name}")
 
             # get path to proteins before and after clustering.
@@ -219,15 +213,9 @@ class DatabasePipeline(Pipeline):
                 class_name, identity=clustering_identity_threshold
             )
 
-            # get clustering tool
-            clustering_tool = self.config_object.get_clustering_tool()
-            clustering_adapter = ClusteringWrapperNames.get_clustering_tool(
-                clustering_tool
-            )
-
             # get clusters as Dict
             # TODO: should done without storing all clusters into  memory.
-            cluster_graph = clustering_adapter.get_clusters(fasta_clustered)
+            cluster_graph = self.clustering_tool_adapter.get_clusters(fasta_clustered)
 
             # randomize the clusters
             randomized_clusters = list(cluster_graph.keys())
@@ -263,7 +251,7 @@ class DatabasePipeline(Pipeline):
             del cluster_graph
 
             # get accesion ids for each clusters reference/centroid protein.
-            output_file = self.get_partition_csv_path(class_name)
+            output_file = self.config_object.get_csv_path_from_name(class_name, self.directory)
             with open(output_file, "w") as output_csv:
                 output_csv.write("partition,accession,protein,protein_length\n")
                 for accession, protein in FastaUtils.get_proteins(fasta_non_clustered):

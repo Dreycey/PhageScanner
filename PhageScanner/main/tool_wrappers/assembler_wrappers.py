@@ -25,25 +25,25 @@ class AssemblyWrapperNames(Enum):
         tool specified in the configuration file.
     """
 
-    megahit = "MEGAHIT"
+    megahit_exe_name = "megahit"
 
     @classmethod
-    def get_assembly_tool(cls, name):
+    def get_assembly_tool(cls, tool_path: Path):
         """Return the the corresponding assembly wrapper (Factory-like pattern)"""
         name2wrapper = {
-            cls.megahit.value: MegaHitWrapper(),
+            cls.megahit_exe_name.value: MegaHitWrapper,
         }
-        wrapper = name2wrapper.get(name)
+        wrapper = name2wrapper.get(tool_path.name)
 
         if wrapper is None:
             tools_available = ",".join(name2wrapper.keys())
             exception_string = (
-                "The Assembly tool requested in the Yaml File is not available. "
+                "The Assembly tool requested in the Yaml File is not available. ",
+                f"The requested tool in the Yaml is: {tool_path.name}. ",
+                f"The options available are: {tools_available}"
             )
-            exception_string += f"The requested tool in the Yaml is: {name}. "
-            exception_string += f"The options available are: {tools_available}"
             raise IncorrectYamlError(exception_string)
-        return wrapper
+        return wrapper(tool_path=tool_path)
 
 
 class AssemblerWrapper(ABC):
@@ -66,10 +66,10 @@ class AssemblerWrapper(ABC):
 class MegaHitWrapper(AssemblerWrapper):
     """This class defines the wrapper for megahit."""
 
-    def __init__(self, threads=1):
+    def __init__(self, tool_path="megahit", threads=1):
         """Instantiate a megahit wrapper for clustering."""
+        self.tool_exe = tool_path
         self.threads = threads
-        self.tool_exe = "megahit"  # change this if executable is not env variable.
 
     def assemble(
         self, first: Path, out_directory: Path, second: Path = None, mem_frac=0.5

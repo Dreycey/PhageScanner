@@ -35,7 +35,7 @@ from keras.models import Sequential, load_model
 from keras.optimizers import Adam
 from keras.regularizers import l1
 
-# scikit-learn
+
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -56,7 +56,7 @@ from PhageScanner.main.exceptions import (
     MissingFileError,
 )
 
-# in-house libraries
+
 from PhageScanner.main.tool_wrappers.blast_wrapper import BLASTWrapper
 from PhageScanner.main.utils import FastaUtils
 

@@ -29,7 +29,7 @@ class Pipeline(ABC):
             This method extracts feature vectors for each protein in
             the dataframe "self.dataframe".
         """
-        logging.info(f"extracting protein features: '{model_name}' d")
+        logging.info(f"extracting protein features: '{model_name}'")
 
         # get feature extractors.
         feature_list = []

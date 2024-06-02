@@ -27,25 +27,25 @@ class OrfFinderWrapperNames(Enum):
         tool specified in the configuration file.
     """
 
-    phanotate = "PHANOTATE"
+    phanotate_exe_name = "phanotate.py"
 
     @classmethod
-    def get_orffinding_tool(cls, name):
+    def get_orffinding_tool(cls, tool_path: Path):
         """Return the the corresponding orf-finder wrapper (Factory-like pattern)"""
         name2wrapper = {
-            cls.phanotate.value: PhanotateWrapper(),
+            cls.phanotate_exe_name.value: PhanotateWrapper,
         }
-        wrapper = name2wrapper.get(name)
+        wrapper = name2wrapper.get(tool_path.name)
 
         if wrapper is None:
             tools_available = ",".join(name2wrapper.keys())
             exception_string = (
-                "The Assembly tool requested in the Yaml File is not available. "
+                "The ORF Finding tool requested is not available. ",
+                f"The requested tool in the Yaml is: {tool_path.name}. ",
+                f"The options available are: {tools_available}"
             )
-            exception_string += f"The requested tool in the Yaml is: {name}. "
-            exception_string += f"The options available are: {tools_available}"
             raise IncorrectYamlError(exception_string)
-        return wrapper
+        return wrapper(tool_path=tool_path)
 
 
 class OrfFinderWrapper(ABC):
@@ -60,9 +60,9 @@ class OrfFinderWrapper(ABC):
 class PhanotateWrapper(OrfFinderWrapper):
     """This class defines the wrapper for phanotate."""
 
-    def __init__(self):
+    def __init__(self, tool_path):
         """Instantiate a phanotate wrapper for finding ORFs."""
-        self.tool_exe = "phanotate.py"  # change this if installing locally.
+        self.tool_exe = tool_path
 
     def find_orfs(self, fasta_path: Path, outpath: Path) -> Path:
         """Find orfs given a set of contigs/genomes.
@@ -93,18 +93,25 @@ class PhanotateWrapper(OrfFinderWrapper):
         return outpath
 
     @staticmethod
-    def get_info_from_name(fasta_entry_name: str):
+    def get_info_from_name(fasta_entry_name: str): # TODO: account for reverse compliment 
         """Get information from the fasta entry name."""
-        # Pattern expects "NC_022762.1_CDS_[4760..5803] [note=score:-1.440691E+08]"
+        # Updated pattern to better handle various identifier formats and exponential notation
         pattern = (
-            r"(\w+\.\d+)_CDS_\[(\d+)\.\.(\d+)\] \[note=score:(-?\d+\.\d+E[+-]\d+)\]"
+            r"([^_\s]+)_CDS_\[(\d+)\.\.(\d+)\] \[note=score:(-?\d+\.\d+[eE][+-]\d+)\]"
         )
         logging.info(fasta_entry_name)
         match = re.search(pattern, fasta_entry_name)
 
-        accession_id = match.group(1)
-        start_pos = int(match.group(2))
-        end_pos = int(match.group(3))
-        score = float(match.group(4))
+        if match:
+            accession_id = match.group(1)
+            start_pos = int(match.group(2))
+            end_pos = int(match.group(3))
+            score = float(match.group(4))
 
-        return accession_id, start_pos, end_pos, score
+            is_reverse_complement = "complement" in fasta_entry_name
+
+            return accession_id, start_pos, end_pos, score
+        else:
+            # Return None or raise an error if no match is found
+            logging.error("No match found")
+            return None

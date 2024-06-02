@@ -38,7 +38,7 @@ class PredictionPipelineType(Enum):
         # Iterate over all members of the enum
         for pipeline_type in PredictionPipelineType:
             if name == pipeline_type.value:
-                logging.info("prediction type: {pipeline_type}")
+                logging.info(f"prediction type: {pipeline_type}")
                 return pipeline_type
         raise ValueError("Unknown prediction pipeline type")
 
@@ -59,6 +59,10 @@ class PredictionPipeline(Pipeline):
         input: Path,
         input_type: str,
         config: Path,
+        orf_finder_tool_path: Path,
+        assembler_tool_path: Path,
+        training_output_directory: Path,
+        probability_threshold: float,
         pipeline_name: str,
         directory: Path,
     ):
@@ -69,6 +73,12 @@ class PredictionPipeline(Pipeline):
         self.directory = directory
         self.input = input
         self.input_type = PredictionPipelineType.get_type(input_type)
+        self.probability_threshold = probability_threshold
+        self.training_output_directory = training_output_directory
+
+        # create the ORF-finding and assembler tool wrappers
+        self.orffinder = OrfFinderWrapperNames.get_orffinding_tool(orf_finder_tool_path)
+        self.assembler = AssemblyWrapperNames.get_assembly_tool(assembler_tool_path)
 
         # dataframe for performing predictions.
         self.dataframe = None
@@ -87,14 +97,10 @@ class PredictionPipeline(Pipeline):
         """
         logging.info(f"Assembling reads: {self.input}")
 
-        # get assembler
-        assembler_name = self.config_object.get_assembler_name()
-        assembler = AssemblyWrapperNames.get_assembly_tool(assembler_name)
-
         # use the assembler to assemble the reads.
         assembly_file_prefix = str(self.pipeline_name) + "_" + "assembly"
         assembly_path = self.directory / assembly_file_prefix
-        full_assembly_path = assembler.assemble(
+        full_assembly_path = self.assembler.assemble(
             first=self.input, out_directory=assembly_path
         )
 
@@ -125,9 +131,7 @@ class PredictionPipeline(Pipeline):
             return orf_file_prefix_proteins
 
         # Get ORFs.
-        orffinder_name = self.config_object.get_orffinder_name()
-        orffinder = OrfFinderWrapperNames.get_orffinding_tool(orffinder_name)
-        orf_file_path = orffinder.find_orfs(fasta_path=self.input, outpath=orf_path)
+        orf_file_path = self.orffinder.find_orfs(fasta_path=self.input, outpath=orf_path)
 
         # get length of each contig/genome
         accession2length = {}
@@ -139,7 +143,7 @@ class PredictionPipeline(Pipeline):
         for orf_name, orf_sequence in FastaUtils.get_proteins(
             orf_file_path, withfullname=True
         ):
-            accession_id, start_pos, stop_pos, score = orffinder.get_info_from_name(
+            accession_id, start_pos, stop_pos, score = self.orffinder.get_info_from_name(
                 orf_name
             )
 
@@ -182,17 +186,13 @@ class PredictionPipeline(Pipeline):
             self.extract_feature_vector(model)
 
             # instantiate the model.
-            model_path = self.config_object.get_model_path(model)
+            model_path = self.config_object.get_model_path(model, self.training_output_directory)
             model_predictor_name = self.config_object.get_predictor_model_name(model)
             model_object = ModelNames.get_model(model_predictor_name)
             model_object = model_object.load(model_path)
 
             # get the model classes.
-            model_classes_csv = self.config_object.get_model_classes(model)
-            with open(model_classes_csv, "r") as f:
-                index2class = list(csv.DictReader(f))[-1]  # get latest.
-                del index2class["datetime"]
-                index2class = {int(k): v for k, v in index2class.items()}
+            index2class = self.config_object.get_model_classes(model)
 
             # predict features from proteins.
             x_test = np.vstack(self.dataframe["features"].to_numpy())
@@ -203,8 +203,7 @@ class PredictionPipeline(Pipeline):
             if len(probabilities) == len(predictions):
                 probabilities_series = pd.Series(probabilities)
                 self.dataframe[model] = self.dataframe[model].mask(
-                    probabilities_series
-                    < self.config_object.get_probability_threshold(),
+                    probabilities_series < self.probability_threshold,
                     -1,
                 )
 

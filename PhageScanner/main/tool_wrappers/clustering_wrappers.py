@@ -24,25 +24,25 @@ class ClusteringWrapperNames(Enum):
         tool specified in the configuration file.
     """
 
-    cdhit = "cdhit"
+    cdhit_exe_name = "cd-hit"
 
     @classmethod
-    def get_clustering_tool(cls, name):
+    def get_clustering_tool(cls, tool_path: Path):
         """Return the the corresponding cluster adapter (Factory-like pattern)"""
         name2wrapper = {
-            cls.cdhit.value: CDHitWrapper(),
+            cls.cdhit_exe_name.value: CDHitWrapper,
         }
-        wrapper = name2wrapper.get(name)
+        wrapper = name2wrapper.get(tool_path.name)
 
         if wrapper is None:
             tools_available = ",".join(name2wrapper.keys())
             exception_string = (
-                "The Clustering tool requested in the Yaml File is not available. "
+                "The Clustering tool requested is not available. ",
+                f"The requested tool in the Yaml is: {tool_path.name}. ",
+                f"The options available are: {tools_available}"
             )
-            exception_string += f"The requested tool in the Yaml is: {name}. "
-            exception_string += f"The options available are: {tools_available}"
             raise IncorrectYamlError(exception_string)
-        return wrapper
+        return wrapper(tool_path=tool_path)
 
 
 class ClusterWrapper(ABC):
@@ -61,10 +61,10 @@ class ClusterWrapper(ABC):
 class CDHitWrapper(ClusterWrapper):
     """This conctrete class provides an interface to clustering using CDHit."""
 
-    def __init__(self, threads=4):
+    def __init__(self, tool_path, threads=4):
         """Instantiate a CDHit adapter for clustering."""
         self.threads = threads
-        self.tool_exe = "cd-hit"  # change this if executable is not env variable.
+        self.tool_exe = tool_path
 
     def cluster(self, fasta_file: Path, outpath: Path, identity=float):
         """Cluster a fasta file of proteins using CDHit."""
