@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from PhageScanner.main.clustering_wrappers import CDHitWrapper
+from PhageScanner.main.tool_wrappers.clustering_wrappers import CDHitWrapper
 
 
 class TestCDHitAdapter(unittest.TestCase):

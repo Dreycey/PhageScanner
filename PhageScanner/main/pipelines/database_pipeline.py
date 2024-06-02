@@ -7,9 +7,9 @@ from pathlib import Path
 import numpy as np
 
 from PhageScanner.main import database_adapters, utils
-from PhageScanner.main.clustering_wrappers import ClusteringWrapperNames
 from PhageScanner.main.database_adapters import DatabaseAdapterNames
 from PhageScanner.main.pipelines.pipeline_interface import Pipeline
+from PhageScanner.main.tool_wrappers.clustering_wrappers import ClusteringWrapperNames
 from PhageScanner.main.utils import CSVUtils, FastaUtils
 
 

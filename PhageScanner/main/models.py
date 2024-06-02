@@ -50,13 +50,14 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
-# in-house libraries
-from PhageScanner.main.blast_wrapper import BLASTWrapper
 from PhageScanner.main.exceptions import (
     IncorrectValueError,
     IncorrectYamlError,
     MissingFileError,
 )
+
+# in-house libraries
+from PhageScanner.main.tool_wrappers.blast_wrapper import BLASTWrapper
 from PhageScanner.main.utils import FastaUtils
 
 

@@ -10,12 +10,12 @@ import numpy as np
 import pandas as pd
 
 from PhageScanner.main import utils
-from PhageScanner.main.assembler_wrappers import AssemblyWrapperNames
 from PhageScanner.main.DNA import DNA
 from PhageScanner.main.feature_extractors import ProteinFeatureExtraction
 from PhageScanner.main.models import ModelNames
-from PhageScanner.main.orffinder_wrappers import OrfFinderWrapperNames
 from PhageScanner.main.pipelines.pipeline_interface import Pipeline
+from PhageScanner.main.tool_wrappers.assembler_wrappers import AssemblyWrapperNames
+from PhageScanner.main.tool_wrappers.orffinder_wrappers import OrfFinderWrapperNames
 from PhageScanner.main.utils import CSVUtils, FastaUtils
 
 
