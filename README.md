@@ -3,8 +3,8 @@
 <a href="https://github.com/Dreycey/PhageScanner/blob/master/LICENSE.txt"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-brightgreen"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 <a href="https://github.com/Dreycey/PhageScanner/blob/dreycey/master/reports/interrogate.out"><img alt="Interogate" src="https://github.com/Dreycey/PhageScanner/blob/master/reports/interrogate.svg"></a>
+<a href="https://hub.docker.com/r/dreyceyalbin/phagescanner"><img alt="Interogate" src=" https://img.shields.io/docker/v/dreyceyalbin/phagescanner"></a>
 </p>
- 
 
 ![Phage Scanner Logo](misc/logo.png)
 
