@@ -77,8 +77,3 @@ models:
       sequential: false
     features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
       - name: "SEQUENTIALONEHOT"
-classes:
-  - name: PVP # No spaces. Can differ between pipelines.
-    final_csv: "binary_database/benchmarking_PVP.csv" # local path.
-  - name: non-PVP
-    final_csv: "binary_database/benchmarking_non-PVP.csv"

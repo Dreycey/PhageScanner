@@ -16,9 +16,7 @@ Subscribe to email list: <a href="http://eepurl.com/ivMTlY"><img alt="Subscribe"
 
 Unsubscribe from email list: <a href="https://gmail.us13.list-manage.com/unsubscribe?u=d11fd2924efec07fab20ba388&id=a7720cf873"><img alt="Unsubscribe" src="https://img.shields.io/badge/Unsubscribe-red"></a>
 
-## Installation
-
-**NOTE**: PhageScanner is only available on 64-bit macOS and Ubuntu linux. To run the tool on windows, we recommend installing the *Ubuntu* Windows Subsystem for Linux (WSL). This limitation is due to some of the underlying tools PhageScanner uses, including: cd-hit, phanotate, and megahit. These all have C++ dependencies that are not inherently available on windows.
+## Installation (Mac and Linux)
 
 ### Installing direct dependencies
 The python dependencies can be installed using the `requirements.txt` file provided in the primary repository.
@@ -29,18 +27,53 @@ python -m pip install -r requirements.txt
 ### Installing command line tool dependencies
 There are several command line tools that PhageScanner uses within the pipeline: (1) CD-HIT, (2) BLAST, (3) Megahit, and (4) Phanotate. Many of these tools are commonly-used bioinformatics tools that you may already have installed. However, please refer to the [PhageScanner Wiki](https://github.com/Dreycey/PhageScanner/wiki) if you'd like more guidance installing these dependencies.
 
+## Installing using Docker (Windows, Mac and Linux)
+The easiest approach to using PhageScanner is to use Docker. Docker allows for PhageScanner to be usable on Windows and removes the need to install the command line tool dependencies. Follow the directions to [install docker](https://docs.docker.com/desktop/install/). For Windows, we used WSL2 to install docker (instead of Hyper-V), but both should work as intended.
+
+### Using the Docker image host on DockerHub
+PhageScanner is host on DockerHub at [https://hub.docker.com/r/dreyceyalbin/phagescanner](https://hub.docker.com/r/dreyceyalbin/phagescanner). This allows for easily downloading the Docker image and running the tool after installing Docker.
+
+* Pull down the docker image from DockerHub
+```
+docker pull dreyceyalbin/phagescanner
+```
+
+* Test that the help message prints
+```
+docker run --rm dreyceyalbin/phagescanner --help
+```
+
+### Building Docker image locally
+The docker image can be built locally to allow for more flexiblity. There are two steps involved in this process:
+
+* Navigate to the `Docker/` directory and run:
+```
+docker build -t dreyceyalbin/phagescanner .
+```
+
+* Test that the help message prints
+```
+docker run --rm dreyceyalbin/phagescanner --help
+```
 
 ## Pipeline Usage
-There are three fundamental pipelines in the PhageScanner tool. Each of these pipelines feeds into the next: (1) Download the training dataset, (2) Training the machine learning models, (3) Using the models to annotate genomes and metagenomics datasets. Each pipelines is configurable to allow end-users extreme flexibility in creating new models to predict new variations of protein classes (ex. "Toxic Protein", "Phage Virion Protein", "Lysogenic"). Each example list below should be ran from the root directory if running the commands "as-is".
+There are three fundamental pipelines in the PhageScanner tool. Each of these pipelines feeds into the next: (1) Download the training dataset, (2) Training the machine learning models, (3) Using the models to annotate genomes and metagenomics datasets. Each pipelines is configurable to allow end-users extreme flexibility in creating new models to predict new variations of protein classes (ex. "Toxic Protein", "Phage Virion Protein", "Lysogenic"). Each example list below **should be ran from the root directory** if running the commands "as-is".
 
 1. Build the database
     - Basic usage
     ```
-    python phagescanner.py database [-h] -c CONFIG -o OUT [--cdhit_path CDHIT_PATH] [-v VERBOSITY]
+    python phagescanner.py database [-h] -c CONFIG -o OUT [--cdhit_path CDHIT_PATH (Default: 'cdihit')] [-v VERBOSITY]
     ```
     - Example (multiclass pvps)
     ```
     python phagescanner.py database -c configs/multiclass_config.yaml -o ./multiclass_database/ -v info
+    ```
+    - Example using Docker (multiclass pvps)
+    ```
+    docker run --rm \
+        -v "$(pwd)/configs:/app/configs" \
+        -v "$(pwd)/multiclass_database:/app/multiclass_database" \
+        dreyceyalbin/phagescanner database -c /app/configs/multiclass_config.yaml -o /app/multiclass_database/ -v info
     ```
 2. Training and Test ML models
     - Basic usage
@@ -51,16 +84,33 @@ There are three fundamental pipelines in the PhageScanner tool. Each of these pi
     ```
     python phagescanner.py train -c configs/multiclass_config.yaml -o training_output --database_csv_path ./multiclass_database/ -v debug
     ```
+    - Example using Docker (multiclass pvps)
+    ```
+    docker run --rm \
+        -v "$(pwd)/configs:/app/configs" \
+        -v "$(pwd)/multiclass_database:/app/multiclass_database" \
+        -v "$(pwd)/training_output:/app/training_output" \
+        dreyceyalbin/phagescanner train -c /app/configs/multiclass_config.yaml -o /app/training_output --database_csv_path /app/multiclass_database/ -v debug
+    ```
 3. Run on metagenomic data, genomes or proteins
     - Basic usage
     ```
     python phagescanner.py predict [-h] -i INPUT -t TYPE ("reads", "genome", or "protein") -c CONFIG -o training_output -n NAME -tdir TRAINING_OUTPUT
-                                [--megahit_path MEGAHIT_PATH] [--phanotate_path PHANOTATE_PATH]
+                                [--megahit_path MEGAHIT_PATH (Default: 'megahit')] [--phanotate_path PHANOTATE_PATH (Default: 'phanotate.py')]
                                 [--probability_threshold PROBABILITY_THRESHOLD] [-v VERBOSITY]
     ```
-    - Example (genomes)
+    - Example (genomes; though sequencing reads and proteins can be used as input)
     ```
     python phagescanner.py predict -c configs/multiclass_config.yaml  -t "genome" -o prediction_output -n "genomes" -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
+    ```
+    - Example using Docker (genomes)
+    ```
+    docker run --rm \
+        -v "$(pwd)/configs:/app/configs" \
+        -v "$(pwd)/examples:/app/examples" \
+        -v "$(pwd)/prediction_output:/app/prediction_output" \
+        -v "$(pwd)/training_output:/app/training_output" \
+        dreyceyalbin/phagescanner predict -c /app/configs/multiclass_config.yaml -t "genome" -o /app/prediction_output -n "genomes" -i /app/examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
     ```
 
 # PhageScanner GUI
