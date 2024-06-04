@@ -6,18 +6,31 @@ quickly implemented and tested.
 
 For help: python phagescanner.py -h
 """
-import os
 from enum import Enum
 import argparse
 import sys
-import PhageScanner.main.pipelines as pipelines
-from PhageScanner.main.pipelines import PipelineNames
-import PhageScanner.main.utils as utils
+
 from pathlib import Path
 import logging
 
+import PhageScanner.main.utils as utils
+from PhageScanner.main.pipelines import (
+    database_pipeline,
+    prediction_pipeline,
+    training_pipeline,
+)
 
 
+class PipelineNames(Enum):
+    """Names of pipeline adapters.
+
+    Description:
+        This enum contains the names of each pipeline.
+    """
+
+    database = "database"
+    train = "train"
+    predict = "predict"
 
 def parseArgs(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -46,11 +59,11 @@ def parseArgs(argv=None) -> argparse.Namespace:
         required=True,
     )
     database_pipeline_parser.add_argument(
-        "-n",
-        "--name",
-        type=str,
-        help="Name for the database files. Will be formatted as <name>_<classname>.extension",
-        required=True,
+        "--cdhit_path",
+        type=Path,
+        help="Path to the 'cd-hit' executable. Useful if not within the PATH environmental variable.",
+        required=False,
+        default="cd-hit"
     )
     database_pipeline_parser.add_argument(
         "-v",
@@ -80,10 +93,10 @@ def parseArgs(argv=None) -> argparse.Namespace:
         required=True,
     )
     train_pipeline_parser.add_argument(
-        "-n",
-        "--name",
-        type=str,
-        help="Name for the database files. Will be formatted as <name>_<classname>.extension",
+        "-db",
+        "--database_csv_path",
+        type=Path,
+        help="Path to the directory used during the database pipeline.",
         required=True,
     )
     train_pipeline_parser.add_argument(
@@ -135,6 +148,34 @@ def parseArgs(argv=None) -> argparse.Namespace:
         required=True,
     )
     predict_pipeline_parser.add_argument(
+        "-tdir",
+        "--training_output",
+        type=Path,
+        help="The path to the training directory output.",
+        required=True,
+    )
+    predict_pipeline_parser.add_argument(
+        "--megahit_path",
+        type=Path,
+        help="Path to the 'megahit' executable. Useful if not within the PATH environmental variable.",
+        required=False,
+        default="megahit"
+    )
+    predict_pipeline_parser.add_argument(
+        "--phanotate_path",
+        type=Path,
+        help="Path to the 'phantoate.py' file. Useful if not within the PATH environmental variable.",
+        required=False,
+        default="phanotate.py"
+    )
+    predict_pipeline_parser.add_argument(
+        "--probability_threshold",
+        type=float,
+        help="The threshold needed to choose a specific class (otherwise, the predicted class is -1).",
+        required=False,
+        default=0.5
+    )
+    predict_pipeline_parser.add_argument(
         "-v",
         "--verbosity",
         type=str,
@@ -151,32 +192,33 @@ def main():
         print(f"Note: This step is time consuming.")
         utils.LogUtils.configure_logging(args.out / "database_pipeline.log", args.verbosity)
         logging.info("Database creation pipeline")
-        db_pipeline = pipelines.DatabasePipeline(config=args.config,
-                                                 pipeline_name=args.name,
-                                                 directory=args.out
-                                                 )
+        db_pipeline = database_pipeline.DatabasePipeline(config=args.config,
+                                                         protein_clustering_tool_path=args.cdhit_path,
+                                                         directory=args.out)
         db_pipeline.run()
 
     def run_train_pipeline():
         print(f"Running training pipeline...")
         utils.LogUtils.configure_logging(args.out / "training_pipeline.log", args.verbosity)
         logging.info("Training and Testing pipeline")
-        train_pipeline = pipelines.TrainingPipeline(config=args.config,
-                                                 pipeline_name=args.name,
-                                                 directory=args.out
-                                                 )
+        train_pipeline = training_pipeline.TrainingPipeline(config=args.config,
+                                                            db_directory=args.database_csv_path,
+                                                            directory=args.out)
         train_pipeline.run()
 
     def run_predict_pipeline():
         print(f"Running prediction pipeline...")
         utils.LogUtils.configure_logging(args.out / "prediction_pipeline.log", args.verbosity)
         logging.info("Prediction pipeline")
-        train_pipeline = pipelines.PredictionPipeline(input=args.input,
-                                                      input_type=args.type,
-                                                      config=args.config,
-                                                      pipeline_name=args.name,
-                                                      directory=args.out
-                                                     )
+        train_pipeline = prediction_pipeline.PredictionPipeline(input=args.input,
+                                                                input_type=args.type,
+                                                                config=args.config,
+                                                                orf_finder_tool_path=args.phanotate_path,
+                                                                assembler_tool_path=args.megahit_path,
+                                                                training_output_directory=args.training_output,
+                                                                probability_threshold=args.probability_threshold,
+                                                                pipeline_name=args.name,
+                                                                directory=args.out)
         train_pipeline.run()
 
     # arguments

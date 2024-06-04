@@ -10,6 +10,7 @@ References:
     are used here.
     DOI: https://doi.org/10.1016/j.bbapap.2020.140406
 """
+
 import hashlib
 import logging
 from abc import ABC, abstractmethod
@@ -631,7 +632,7 @@ class ProteinFeatureAggregator:
         extracted_features = []
         for extractor in self.extractors:
             extracted_features.append(extractor.extract_features(protein))
-            if type(extractor) == SequentialOneHot:
+            if isinstance(extractor, SequentialOneHot):
                 return extracted_features
 
         # Combine extracted features into a single matrix or vector

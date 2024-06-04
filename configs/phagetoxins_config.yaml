@@ -1,3 +1,12 @@
+clustering:
+  deduplication-threshold: 100
+  clustering-percentage: 95
+  k_partitions: 5 # number of partitions in k-fold cross validation
+classes:
+  - name: KnownToxin
+    uniprot: '(bacteriophage AND reviewed: true AND ((go:0090729)) OR ("Cholera toxin" AND CTX) OR ("exotoxin C" AND (go:0090729)) OR ("exotoxin A" AND "(SpeA)" AND (go:0090729)) OR ("Verotoxin" OR "shiga-like toxin" AND (go:0090729)) OR ("Botulinum toxin" AND (go:0090729)) OR ("Diphtheria toxin" AND (go:0090729)) OR ("Toxic shock" AND (go:0090729)) OR ("Ctx" AND (go:0090729)) OR ("Shiga toxin Stx" AND (go:0090729)) OR (bacteriophage AND (go:0090729)))'
+  - name: Non-Toxin
+    uniprot: 'bacteriophage NOT (go:0090729) AND reviewed: true'
 models:
   - name: "BLAST"
     model_info:
@@ -44,8 +53,6 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 0
-classes:
-  - name: KnownToxin
-    final_csv: "toxin_database/benchmarking_KnownToxin.csv"
-  - name: Non-Toxin
-    final_csv: 'toxin_database/benchmarking_Non-Toxin.csv'
+
+
+  

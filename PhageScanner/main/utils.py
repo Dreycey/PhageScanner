@@ -6,6 +6,7 @@ Description:
     files, downloading serialized objects, uploading
     serialized objects, and other various methods.
 """
+
 import csv
 import logging
 import os
@@ -58,12 +59,12 @@ class CommandLineUtils:
         # get the output of the command
         output, error = process.communicate()
 
-        # NOTE: ignoring errors from phanotate since it throws errors without tscan
+        # NOTE: ignoring errors from phanotate since it throws errors without tscan.
         # NOTE: ignoring errors from megahit since it throws errors even on success.
         if (
             len(error) > 0
-            and not command.startswith("phanotate.py")
-            and not command.startswith("megahit")
+            and not ("phanotate.py" in command)
+            and not ("megahit" in command)
         ):
             error_message = "There was an error executing a shell command.\n"
             error_message += f"The error was: \n\n{error}\n\n"
@@ -153,10 +154,6 @@ class DatabaseConfig(ConfigUtils):
         """Get the sequence classes for database construction."""
         return self.config.get("classes")
 
-    def get_clustering_tool(self):
-        """Get the clustering tool name."""
-        return self.config["clustering"]["name"]
-
     def get_clustering_threshold(self):
         """Get the clustering identity threshold"""
         return self.config["clustering"]["clustering-percentage"] / 100
@@ -168,6 +165,10 @@ class DatabaseConfig(ConfigUtils):
     def get_deduplication_threshold(self) -> int:
         """Get the number of partitions to use for k-fold CV."""
         return self.config["clustering"]["deduplication-threshold"] / 100
+
+    def get_csv_path_from_name(self, class_name, dbdirectory):
+        """Get the csv path for proteins after clustering."""
+        return dbdirectory / Path(class_name + ".csv")
 
 
 class TrainingConfig(ConfigUtils):
@@ -189,13 +190,8 @@ class TrainingConfig(ConfigUtils):
         self.config = super().open_config(config_file)
 
     def get_classes(self):
-        """Get the sequence classes for training."""
-        classes = []
-        for class_info in self.config.get("classes"):
-            class_name = class_info.get("name")
-            csv_path = Path(class_info.get("final_csv"))
-            classes.append((class_name, csv_path))
-        return classes
+        """Get the sequence classes for database construction."""
+        return self.config.get("classes")
 
     def get_models(self):
         """Get the models for training.
@@ -241,6 +237,10 @@ class TrainingConfig(ConfigUtils):
 
         return model_predictor_name
 
+    def get_csv_path_from_name(self, class_name, dbdirectory):
+        """Get the csv path for proteins after clustering."""
+        return dbdirectory / Path(class_name + ".csv")
+
 
 class PredictionConfig(ConfigUtils):
     """The prediction pipeline configuration object.
@@ -266,18 +266,6 @@ class PredictionConfig(ConfigUtils):
         models = [m["name"] for m in self.config["models"]]
         return models
 
-    def get_assembler_name(self):
-        """Get the name of the assembler from the configuration."""
-        return self.config["assembler"]
-
-    def get_orffinder_name(self):
-        """Get the name of the orffinder from the configuration."""
-        return self.config["orffinder"]
-
-    def get_probability_threshold(self):
-        """Get the probability needed for classifying proteins."""
-        return float(self.config["probability_threshold"])
-
     def sequential(self, model_name):
         """Return True if the model takes in sequential data."""
         for m in self.config["models"]:
@@ -286,13 +274,9 @@ class PredictionConfig(ConfigUtils):
                     return m["model_info"]["sequential"]
         return False
 
-    def get_model_path(self, model_name):
+    def get_model_path(self, model_name, training_output_directory: Path):
         """Get the model path from the model name."""
-        for m in self.config["models"]:
-            if m["name"] == model_name:
-                return m["model_path"]
-        # if nothing found
-        raise IncorrectYamlError(f"A model with the name {model_name} does not exist.")
+        return training_output_directory / model_name
 
     def is_sequential(self, model_name):
         """Return True if the model takes in sequential data."""
@@ -302,13 +286,22 @@ class PredictionConfig(ConfigUtils):
                     return True
         return False
 
-    def get_model_classes(self, model_name):
+    def get_model_classes(self, model_name) -> Dict[int, str]:
         """Get the model path from the model name."""
-        for m in self.config["models"]:
-            if m["name"] == model_name:
-                return m["index2class_file"]
-        # if nothing found
-        raise IncorrectYamlError(f"A model with the name {model_name} does not exist.")
+        for model in self.config["models"]:
+            if model["name"] == model_name:
+                model_classes_csv = model.get("index2class_file")
+                if model_classes_csv:
+                    with open(model_classes_csv, "r") as f:
+                        index2class = list(csv.DictReader(f))[-1]  # get latest.
+                        del index2class["datetime"]
+                        index2class = {int(k): v for k, v in index2class.items()}
+                        return index2class
+                else:
+                    index2class = {}
+                    for index, proteinclass in enumerate(self.config.get("classes")):
+                        index2class[index] = proteinclass.get("name")
+        return index2class
 
     def get_model_features(self, model_name):
         """Get the model features for a given model."""

@@ -6,6 +6,7 @@ Description:
     using a training dataset, and allow for classification
     based on the training data.
 """
+
 from pathlib import Path
 
 from PhageScanner.main.exceptions import IncorrectValueError
@@ -20,10 +21,10 @@ class BLASTWrapper(object):
         around BLAST.
     """
 
-    def __init__(self):
+    def __init__(self, makeblastdb_exe_path="makeblastdb", blastp_exe_path="blastp"):
         """Construct for the BLAST wrapper."""
-        self.makedbcmd = "makeblastdb"
-        self.querycmd = "blastp"
+        self.makeblastdb_exe_path = makeblastdb_exe_path
+        self.blastp_exe_path = blastp_exe_path
         self.dbpath = None
 
     def create_database(self, fasta_file: Path, db_name: Path):
@@ -40,7 +41,7 @@ class BLASTWrapper(object):
                                 2. DBNAME.phr
                                 3. DBNAME.pin
         """
-        command = f"{self.makedbcmd} "
+        command = f"{self.makeblastdb_exe_path} "
         command += f"-in {fasta_file} "
         command += "-input_type fasta "
         command += "-dbtype prot "
@@ -61,7 +62,7 @@ class BLASTWrapper(object):
             )
 
         # run command
-        command = f"{self.querycmd} "
+        command = f"{self.blastp_exe_path} "
         command += f"-query {fasta_file} "
         command += f"-db {self.dbpath} "
         command += f"-out {outputfile} "

@@ -9,6 +9,7 @@ NOTE:
     This module heavily relies on `dna_features_viewer`.
     https://edinburgh-genome-foundry.github.io/DnaFeaturesViewer/
 """
+
 import os
 from pathlib import Path
 from typing import Dict, List, Tuple

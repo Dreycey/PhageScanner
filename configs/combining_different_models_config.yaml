@@ -1,6 +1,3 @@
-assembler: MEGAHIT
-orffinder: PHANOTATE
-probability_threshold: 0.80
 models:
   # - name: "ToxinFinder-BLAST"
   #   model_path: "pretrained_models/ToxinFinder-BLAST" # local path.

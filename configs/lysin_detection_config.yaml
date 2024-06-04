@@ -1,3 +1,14 @@
+clustering:
+  deduplication-threshold: 99
+  clustering-percentage: 90
+  k_partitions: 5 # number of partitions in k-fold cross validation
+classes:
+  - name: Lysin
+    uniprot: "endolysin"
+    entrez: "endolysin[Title]"
+  - name: non-Lysin
+    uniprot: "cc_subcellular_location: virion NOT endolysin"
+    entrez: "bacteriophage[Organism]"
 models:
   # - name: "BLAST"
   #   model_info:
@@ -22,8 +33,3 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 0
-classes:
-  - name: Lysin # No spaces. Can differ between pipelines.
-    final_csv: "lysin_database/lysins_Lysin.csv" # local path.
-  - name: non-Lysin
-    final_csv: "lysin_database/lysins_non-Lysin.csv"

@@ -1,0 +1,23 @@
+# direct dependencies
+beautifulsoup4==4.11.1
+biopython==1.81
+joblib==1.4.0
+numpy==1.26.4
+pandas==2.2.2
+pyyaml==6.0.1
+requests==2.32.3
+
+# used for testing
+black==23.1.0
+coverage==7.5.3
+interrogate==1.7.0
+tox==4.15.0
+
+# machine learning libraries
+keras==3.3.3
+scikit-learn==1.5.0
+tensorflow==2.16.1
+
+# gui
+dna-features-viewer==3.1.3
+tqdm==4.66.4

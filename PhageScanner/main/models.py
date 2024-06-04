@@ -7,6 +7,7 @@ Description:
     This class also contains methods for evaluating the
     models performance.
 """
+
 import logging
 import os
 import random
@@ -33,8 +34,6 @@ from keras.layers import (
 from keras.models import Sequential, load_model
 from keras.optimizers import Adam
 from keras.regularizers import l1
-
-# scikit-learn
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -49,13 +48,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
-# in-house libraries
-from PhageScanner.main.blast_wrapper import BLASTWrapper
 from PhageScanner.main.exceptions import (
     IncorrectValueError,
     IncorrectYamlError,
     MissingFileError,
 )
+from PhageScanner.main.tool_wrappers.blast_wrapper import BLASTWrapper
 from PhageScanner.main.utils import FastaUtils
 
 
@@ -217,17 +215,17 @@ class KerasModel(Model):
         models using the Keras API.
     """
 
-    file_extension = ".h5"
+    file_extension = ".keras"
 
     def save(self, file_path: Path):
         """Save a model to disk for scikit learn."""
-        self.model.save(str(file_path))
+        self.model.save(str(file_path) + KerasModel.file_extension)
 
     @classmethod
     def load(cls, file_path: Path):
         """Load a model from disk for scikitlearn."""
         model_obj = cls()
-        model_obj.model = load_model(str(file_path))
+        model_obj.model = load_model(str(file_path) + KerasModel.file_extension)
         return model_obj
 
     def predict(self, test_x):
@@ -318,7 +316,7 @@ class FFNNMultiClassModel(KerasModel):
         model.add(Dense(number_of_classes, activation="softmax"))
 
         # compile the model
-        opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, decay=0.0, amsgrad=False)
+        opt = Adam(beta_1=0.9, beta_2=0.999, amsgrad=False)  # lr=0.001, decay=0.0,
         model.compile(
             loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["accuracy"]
         )
