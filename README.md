@@ -101,7 +101,7 @@ There are three fundamental pipelines in the PhageScanner tool. Each of these pi
     ```
     - Example (genomes; though sequencing reads and proteins can be used as input)
     ```
-    python phagescanner.py predict -c configs/multiclass_config.yaml  -t "genome" -o prediction_output -n "genomes" -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
+    python phagescanner.py predict -t "genomes" -c configs/multiclass_config.yaml -n "OUTPREFIX" -tdir .\training_output\ -o prediction_output -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
     ```
     - Example using Docker (genomes)
     ```
@@ -110,7 +110,7 @@ There are three fundamental pipelines in the PhageScanner tool. Each of these pi
         -v "$(pwd)/examples:/app/examples" \
         -v "$(pwd)/prediction_output:/app/prediction_output" \
         -v "$(pwd)/training_output:/app/training_output" \
-        dreyceyalbin/phagescanner predict -c /app/configs/multiclass_config.yaml -t "genome" -o /app/prediction_output -n "genomes" -i /app/examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
+        dreyceyalbin/phagescanner predict -t "genome" -c /app/configs/multiclass_config.yaml -o /app/prediction_output -n "OUTPREFIX" -tdir .\training_output\ -i /app/examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
     ```
 
 # PhageScanner GUI
@@ -135,9 +135,3 @@ PhageScanner has a GUI for viewing the results of the prediction pipeline to all
     ```
     python phagescanner_gui.py gui -p prediction_output/genomes_predictions.csv -o output_images/
     ```
-
-# Notes
-
-1. Database configuration names must match those in in the `DatabaseAdapterNames` Enum. If you want to create a new database adapter, make sure to add the name to the `DatabaseAdapterNames` enum. In addition, you must ensure these names match the configuration file, or the database query will be ignored.
-2. Each "pipeline", as specified in the `Pipelines.py` file, is tied to a specific configuration class that is directly coupled with a particular configuration file. If you want to change the names for a particular pipeline, you must update the corresponding class. This design pattern allows for easily changing the configuration dependencies for a particular pipeline.
-3. Make sure the configuration files have names that are one word - without spaces.
