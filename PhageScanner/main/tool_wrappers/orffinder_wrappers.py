@@ -94,7 +94,7 @@ class PhanotateWrapper(OrfFinderWrapper):
 
     @staticmethod
     def get_info_from_name(fasta_entry_name: str):
-        """Get information from the fasta entry name using two different parsing strategies."""
+        """Get information from the fasta entry name."""
         # First parsing strategy with regex
         pattern = r"([^_\s]+)_CDS_\[(\d+)\.\.(\d+)\] \[note=score:(-?\d+\.\d+[eE][+-]\d+)\]"
         logging.info(f"Attempting to parse with regex: {fasta_entry_name}")

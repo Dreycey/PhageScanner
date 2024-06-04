@@ -148,7 +148,7 @@ class PredictionPipeline(Pipeline):
                 self.orffinder.get_info_from_name(orf_name)
             )
 
-            if stop_pos == None:
+            if stop_pos is None:
                 stop_pos = start_pos + len(orf_sequence)
 
             # save to output file.
