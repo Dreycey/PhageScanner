@@ -28,7 +28,7 @@ python -m pip install -r requirements.txt
 There are several command line tools that PhageScanner uses within the pipeline: (1) CD-HIT, (2) BLAST, (3) Megahit, and (4) Phanotate. Many of these tools are commonly-used bioinformatics tools that you may already have installed. However, please refer to the [PhageScanner Wiki](https://github.com/Dreycey/PhageScanner/wiki) if you'd like more guidance installing these dependencies.
 
 ## Installing using Docker (Windows, Mac and Linux)
-The easiest approach to using PhageScanner is to use Docker. Docker allows for PhageScanner to be usable on Windows and removes the need to install the command line tool dependencies. Follow the directions to [install docker](https://docs.docker.com/desktop/install/). For Windows, we used WSL2 to install docker (instead of Hyper-V), but both should work as intended.
+The easiest approach to using PhageScanner is to use Docker. Docker allows for PhageScanner to be usable on Windows and removes the need to install the command line tool dependencies. Follow the directions to [https://docs.docker.com/desktop/install/](https://docs.docker.com/engine/install/). For Windows, we used WSL2 to install docker.
 
 ### Using the Docker image host on DockerHub
 PhageScanner is host on DockerHub at [https://hub.docker.com/r/dreyceyalbin/phagescanner](https://hub.docker.com/r/dreyceyalbin/phagescanner). This allows for easily downloading the Docker image and running the tool after installing Docker.
