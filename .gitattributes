@@ -4,4 +4,4 @@ reports/ linguist-vendored
 logs/ linguist-vendored
 
 # Ignore generated reports
-reports/ linguist-vendored
+misc/ linguist-vendored
