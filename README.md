@@ -89,8 +89,10 @@ There are three fundamental pipelines in the PhageScanner tool. Each of these pi
     - Basic usage
     ```
     python phagescanner.py predict [-h] -i INPUT -t TYPE ("reads", "genome", or "protein") -c CONFIG -o training_output -n NAME -tdir TRAINING_OUTPUT
-                                [--megahit_path MEGAHIT_PATH (Default: 'megahit')] [--phanotate_path PHANOTATE_PATH (Default: 'phanotate.py')]
-                                [--probability_threshold PROBABILITY_THRESHOLD] [-v VERBOSITY]
+                                   [--megahit_path MEGAHIT_PATH (Default: 'megahit')]
+                                   [--phanotate_path PHANOTATE_PATH (Default: 'phanotate.py')]
+                                   [--probability_threshold PROBABILITY_THRESHOLD] 
+                                   [-v VERBOSITY]
     ```
     - Example (genomes; though sequencing reads and proteins can be used as input)
     ```
