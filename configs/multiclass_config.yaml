@@ -5,46 +5,46 @@ clustering:
 classes:
   - name: MajorCapsid
     uniprot: "major capsid AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "major capsid[Title]"
+    # entrez: "bacteriophage[Organism] AND major capsid[Title]"
   - name: MinorCapsid
     uniprot: "minor capsid AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "minor capsid[Title]"
+    # entrez: "bacteriophage[Organism] AND minor capsid[Title]"
   - name: Baseplate
     uniprot: "baseplate AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "baseplate[Title]"
+    # entrez: "bacteriophage[Organism] AND baseplate[Title]"
   - name: MajorTail
     uniprot: "major tail AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "major tail[Title]"
+    # entrez: "bacteriophage[Organism] AND major tail[Title]"
   - name: MinorTail
     uniprot: "minor tail AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "minor tail[Title]"
+    # entrez: "bacteriophage[Organism] AND minor tail[Title]"
   - name: Portal
     uniprot: "portal AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "portal[Title]"
+    # entrez: "bacteriophage[Organism] AND portal[Title]"
   - name: TailFiber
     uniprot: "tail fiber AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "tail fiber[Title]"
+    # entrez: "bacteriophage[Organism] AND tail fiber[Title]"
   - name: Collar
     uniprot: "collar AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "collar[Title]"
-  - name: shaft
+    # entrez: "bacteriophage[Organism] AND collar[Title]"
+  - name: Shaft
     uniprot: "(shaft OR sheath) AND tail AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "(shaft[Title] OR sheath[Title]) AND tail[Title]"
+    # entrez: "bacteriophage[Organism] AND (shaft[Title] OR sheath[Title]) AND tail[Title]"
   - name: HTJ
     uniprot: "head-tail AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "head-tail[Title]"
+    # entrez: "bacteriophage[Organism] AND head-tail[Title]"
   - name: non-PVP
     uniprot: "capsid NOT cc_subcellular_location: virion AND reviewed: true"
     # entrez: "bacteriophage[Organism] NOT ((shaft[Title] OR sheath[Title]) AND tail[Title]) OR head-tail[Title] OR tail fiber[Title] OR portal[Title] OR minor tail[Title] OR major tail[Title] OR baseplate[Title] OR minor capsid[Title] OR major capsid[Title])"
 models:
-  # - name: "BLAST"
-  #   model_info:
-  #     model_name: "BLAST"
-  #     sequential: false
-  #   feature_selection: false # Options:
-  #   features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-  #     - name: "PROTEINSEQ"
-  - name: "PhANNs (FFNN)"
+  - name: "PhageScanner_BLAST (multiclass-PVP)"
+    model_info:
+      model_name: "BLAST"
+      sequential: false
+    feature_selection: false # Options:
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "PROTEINSEQ"
+  - name: "PhANNs_FFNN (multiclass-PVP)"
     model_info:
       model_name: "FFNN"
       sequential: false
@@ -55,13 +55,13 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 2
-  - name: "DeePVP (CNN)"
+  - name: "DeePVP_CNN (multiclass-PVP)"
     model_info:
       model_name: "CNN"
       sequential: false
     features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
       - name: "SEQUENTIALONEHOT"
-  - name: "Baseline Model - Logistic Regression"
+  - name: "PhageScanner_LogisticRegression (multiclass-PVP)"
     model_info:
       model_name: "LOGREG"
       sequential: false
@@ -69,7 +69,7 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 0
-  - name: "PhageScanner (HashSeq-FFNN)"
+  - name: "PhageScanner_HashSeq-FFNN (multiclass-PVP)"
     model_info:
       model_name: "FFNN"
       sequential: false
@@ -78,7 +78,7 @@ models:
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           vec_size: 1000
           kmer_size: 10
-  - name: "PhageScanner (RNN)"
+  - name: "PhageScanner_RNN (multiclass-PVP)"
     model_info:
       model_name: "RNN"
       sequential: 2
