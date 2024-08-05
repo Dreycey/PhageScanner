@@ -5,37 +5,37 @@ clustering:
 classes:
   - name: MajorCapsid
     uniprot: "major capsid AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "bacteriophage[Organism] AND major capsid[Title]"
+    entrez: "major capsid[Title]"
   - name: MinorCapsid
     uniprot: "minor capsid AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "bacteriophage[Organism] AND minor capsid[Title]"
+    entrez: "minor capsid[Title]"
   - name: Baseplate
     uniprot: "baseplate AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "bacteriophage[Organism] AND baseplate[Title]"
+    entrez: "baseplate[Title]"
   - name: MajorTail
     uniprot: "major tail AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "bacteriophage[Organism] AND major tail[Title]"
+    entrez: "major tail[Title]"
   - name: MinorTail
     uniprot: "minor tail AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "bacteriophage[Organism] AND minor tail[Title]"
+    entrez: "minor tail[Title]"
   - name: Portal
     uniprot: "portal AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "bacteriophage[Organism] AND portal[Title]"
+    entrez: "portal[Title]"
   - name: TailFiber
     uniprot: "tail fiber AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "bacteriophage[Organism] AND tail fiber[Title]"
+    entrez: "tail fiber[Title]"
   - name: Collar
     uniprot: "collar AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "bacteriophage[Organism] AND collar[Title]"
+    entrez: "collar[Title]"
   - name: Shaft
     uniprot: "(shaft OR sheath) AND tail AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "bacteriophage[Organism] AND (shaft[Title] OR sheath[Title]) AND tail[Title]"
+    entrez: "(shaft[Title] OR sheath[Title]) AND tail[Title]"
   - name: HTJ
     uniprot: "head-tail AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "bacteriophage[Organism] AND head-tail[Title]"
+    entrez: "head-tail[Title]"
   - name: non-PVP
     uniprot: "capsid NOT cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "bacteriophage[Organism] NOT ((shaft[Title] OR sheath[Title]) AND tail[Title]) OR head-tail[Title] OR tail fiber[Title] OR portal[Title] OR minor tail[Title] OR major tail[Title] OR baseplate[Title] OR minor capsid[Title] OR major capsid[Title])"
+    entrez: "bacteriophage[Organism] NOT ((shaft[Title] OR sheath[Title]) AND tail[Title]) OR head-tail[Title] OR tail fiber[Title] OR portal[Title] OR minor tail[Title] OR major tail[Title] OR baseplate[Title] OR minor capsid[Title] OR major capsid[Title])"
 models:
   - name: "PhageScanner_BLAST (multiclass-PVP)"
     model_info:
