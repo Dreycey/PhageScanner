@@ -67,7 +67,7 @@ class BLASTWrapper(object):
         command += f"-db {self.dbpath} "
         command += f"-out {outputfile} "
         command += f"-num_threads {threads} "
-        command += "-max_target_seqs 1 "
+        command += "-max_target_seqs 5 "
         command += '-outfmt "6 qseqid sseqid score"'
 
         # run the command.

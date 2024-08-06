@@ -309,8 +309,9 @@ class FFNNMultiClassModel(KerasModel):
         model.add(Dropout(0.2))
         model.add(Dense(200, activation="relu"))
         model.add(Dropout(0.2))
-        model.add(Dense(200, activation="relu"))
+        model.add(Dense(2000, activation="relu"))
         model.add(Dropout(0.2))
+        model.add(Dense(200, activation="relu"))
 
         # Add an output layer
         model.add(Dense(number_of_classes, activation="softmax"))
@@ -331,11 +332,19 @@ class FFNNMultiClassModel(KerasModel):
                 number_of_classes=max(train_y) + 1,
             )
 
-        # set up early stopping criterion. If training doesn't
-        # improve after 2 batches, finish.
+        # set up early stopping criterion.
         early_stopping = EarlyStopping(
-            monitor="loss", mode="min", min_delta=0.01, patience=10
+            monitor="loss",
+            min_delta=0.01,
+            patience=2,
+            verbose=1,
+            mode="auto",
+            baseline=None,
+            restore_best_weights=True,
+            start_from_epoch=0,
         )
+
+        # train the model
         self.model.fit(
             train_x,
             train_y,
@@ -393,11 +402,18 @@ class RNNMultiClassifier(KerasModel):
                 number_of_classes=max(train_y) + 1,
             )
 
-        # set up early stopping criterion. If training doesn't
-        # improve after 2 batches, finish.
+        # set up early stopping criterion.
         early_stopping = EarlyStopping(
-            monitor="loss", mode="min", min_delta=0.01, patience=2
+            monitor="loss",
+            min_delta=0.01,
+            patience=2,
+            verbose=1,
+            mode="auto",
+            baseline=None,
+            restore_best_weights=True,
+            start_from_epoch=0,
         )
+
         self.model.fit(
             train_x,
             train_y,
@@ -461,11 +477,18 @@ class CNNMultiClassifier(KerasModel):
                 number_of_classes=max(train_y) + 1,
             )
 
-        # set up early stopping criterion. If training
-        # doesn't improve after 2 batches, finish.
+        # set up early stopping criterion.
         early_stopping = EarlyStopping(
-            monitor="loss", mode="min", min_delta=0.01, patience=2
+            monitor="loss",
+            min_delta=0.01,
+            patience=2,
+            verbose=1,
+            mode="auto",
+            baseline=None,
+            restore_best_weights=True,
+            start_from_epoch=0,
         )
+
         self.model.fit(
             train_x,
             train_y,
@@ -479,10 +502,10 @@ class CNNMultiClassifier(KerasModel):
 class BlastClassifier(BLASTWrapper, Model):
     """Creates a classifier around BLAST."""
 
-    def __init__(self, database_path=None):
+    def __init__(self, database_path=None, makeblastdb_exe_path="makeblastdb", blastp_exe_path="blastp"):
         """Construct the BLAST classifier."""
-        self.makedbcmd = "makeblastdb"
-        self.querycmd = "blastp"
+        self.makeblastdb_exe_path = makeblastdb_exe_path
+        self.blastp_exe_path = blastp_exe_path
         self.dbpath = database_path
         self.temp_directory = None
 
