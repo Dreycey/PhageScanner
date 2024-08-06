@@ -96,7 +96,7 @@ There are three fundamental pipelines in the PhageScanner tool. Each of these pi
     ```
     - Example (genomes; though sequencing reads and proteins can be used as input)
     ```
-    python phagescanner.py predict -t "genomes" -c configs/multiclass_config.yaml -n "OUTPREFIX" -tdir .\training_output\ -o prediction_output -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
+    python phagescanner.py predict -t "genome" -c configs/multiclass_config.yaml -n "OUTPREFIX" -tdir .\training_output\ -o prediction_output -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
     ```
     - Example using Docker (genomes)
     ```
