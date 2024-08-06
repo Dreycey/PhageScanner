@@ -1,5 +1,5 @@
 clustering:
-  deduplication-threshold: 99
+  deduplication-threshold: 100
   clustering-percentage: 90
   k_partitions: 5 # number of partitions in k-fold cross validation
 classes:

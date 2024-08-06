@@ -1,7 +1,7 @@
 clustering:
+  deduplication-threshold: 100
   clustering-percentage: 90
   k_partitions: 5 # number of partitions in k-fold cross validation
-  deduplication-threshold: 100
 classes:
   - name: MajorCapsid
     uniprot: "major capsid AND cc_subcellular_location: virion AND reviewed: true"
@@ -37,14 +37,14 @@ classes:
     uniprot: "capsid NOT cc_subcellular_location: virion AND reviewed: true"
     entrez: "bacteriophage[Organism] NOT ((shaft[Title] OR sheath[Title]) AND tail[Title]) OR head-tail[Title] OR tail fiber[Title] OR portal[Title] OR minor tail[Title] OR major tail[Title] OR baseplate[Title] OR minor capsid[Title] OR major capsid[Title])"
 models:
-  - name: "PhageScanner_BLAST (multiclass-PVP)"
+  - name: "PhageScanner_BLAST_multiclass_PVP"
     model_info:
       model_name: "BLAST"
       sequential: false
     feature_selection: false # Options:
     features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
       - name: "PROTEINSEQ"
-  - name: "PhANNs_FFNN (multiclass-PVP)"
+  - name: "PhANNs_FFNN_multiclass_PVP"
     model_info:
       model_name: "FFNN"
       sequential: false
@@ -55,13 +55,13 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 2
-  - name: "DeePVP_CNN (multiclass-PVP)"
+  - name: "DeePVP_CNN_multiclass_PVP"
     model_info:
       model_name: "CNN"
       sequential: false
     features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
       - name: "SEQUENTIALONEHOT"
-  - name: "PhageScanner_LogisticRegression (multiclass-PVP)"
+  - name: "PhageScanner_LogisticRegression_multiclass_PVP"
     model_info:
       model_name: "LOGREG"
       sequential: false
@@ -69,7 +69,7 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 0
-  - name: "PhageScanner_HashSeq-FFNN (multiclass-PVP)"
+  - name: "PhageScanner_FFNN_Hashseq_multiclass_PVP"
     model_info:
       model_name: "FFNN"
       sequential: false
@@ -78,7 +78,7 @@ models:
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           vec_size: 1000
           kmer_size: 10
-  - name: "PhageScanner_RNN (multiclass-PVP)"
+  - name: "PhageScanner_RNN_multiclass_PVP"
     model_info:
       model_name: "RNN"
       sequential: 2
