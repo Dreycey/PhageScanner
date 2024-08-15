@@ -13,8 +13,8 @@ import sys
 from pathlib import Path
 import logging
 
-import PhageScanner.main.utils as utils
-from PhageScanner.main.pipelines import (
+import src.main.utils as utils
+from src.main.pipelines import (
     database_pipeline,
     prediction_pipeline,
     training_pipeline,
