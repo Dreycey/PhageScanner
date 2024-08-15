@@ -4,6 +4,8 @@ import logging
 import time
 from abc import ABC, abstractmethod
 
+import swifter
+
 from PhageScanner.main.feature_extractors import (
     FeatureExtractorNames,
     ProteinFeatureAggregator,
@@ -53,5 +55,6 @@ class Pipeline(ABC):
         self.dataframe["features"] = self.dataframe["protein"].apply(
             aggregator.extract_features
         )
+
 
         logging.info(f"done extracting features for model: '{model_name}'")

@@ -49,14 +49,11 @@ class DatabasePipeline(Pipeline):
             have been clustered at that particular identity
             threshold.
         """
-        identity_str = ""
-        if identity:
-            identity = int(100 * identity)
-            identity_str = f"_{identity}"
+        identity_str = f"_{int(100 * identity)}" if identity else ""
         path = self.directory / (class_name + f"{identity_str}" + ".fasta")
         return path
 
-    def get_proteins_from_db_adapters(self):
+    def get_proteins_from_db_adapters(self, db_count_filename="db_count.csv"):
         """Get proteins from each database adapter and saves to local file.
 
         Description:
@@ -119,7 +116,7 @@ class DatabasePipeline(Pipeline):
                     )
 
                     # save count to csv.
-                    db_count_csv = self.directory / "db_count.csv"
+                    db_count_csv = self.directory / db_count_filename
                     temp_db_count = {
                         "datetime": self.pipeline_start_time,
                         "database": database_name,
@@ -133,7 +130,7 @@ class DatabasePipeline(Pipeline):
                     )
 
     def cluster_proteins(
-        self, clustering_identity_threshold, input_identity_threshold=None
+        self, clustering_identity_threshold, input_identity_threshold=None, cluster_count_filename="result_cluster_ouput.csv"
     ):
         """Cluster each class of proteins.
 
@@ -158,6 +155,12 @@ class DatabasePipeline(Pipeline):
                 class_name, identity=clustering_identity_threshold
             )
 
+            if os.path.isfile(output_file_path):
+                logging.warning(
+                    f"(Skip) Clustered class already obtained: {class_name} | {output_file_path}"
+                )
+                continue
+
             # cluster proteins.
             self.clustering_tool_adapter.cluster(
                 fasta_file=input_file_path,
@@ -166,7 +169,7 @@ class DatabasePipeline(Pipeline):
             )
 
             # save count to csv.
-            db_count_csv = self.directory / "result_cluster_ouput.csv"
+            cluster_count_csv = self.directory / cluster_count_filename
             temp_db_count = {
                 "datetime": self.pipeline_start_time,
                 "class_name": class_name,
@@ -178,11 +181,62 @@ class DatabasePipeline(Pipeline):
             CSVUtils.appendcsv(
                 data_dict=[temp_db_count],  # input must be an array.
                 fieldnames=temp_db_count.keys(),
-                file_path=db_count_csv,
+                file_path=cluster_count_csv,
             )
 
+    def get_min_partition_size(self, clustering_identity_threshold):
+        """ Get the minimum class size per partition. """
+        min_cluster_size_to_use = float("inf")
+        for class_info in self.config_object.get_classes():
+            class_name = class_info.get("name") # TODO: move to config_object
+
+            # get path to proteins after clustering.
+            fasta_clustered = self.get_fasta_path(
+                class_name, identity=clustering_identity_threshold
+            )
+
+            # get clusters as Dict
+            cluster_graph = self.clustering_tool_adapter.get_clusters(fasta_clustered)
+            
+            # get cluster sizes
+            cluster_sizes = []
+            for cluster, cluster_proteins in cluster_graph.items():
+                cluster_size = len(cluster_proteins)
+                cluster_sizes.append(cluster_size)
+            max_cluster_size = max(cluster_sizes)
+            cluster_size_90P = np.percentile(cluster_sizes, 90)
+            min_cluster_size = min(cluster_sizes)
+            cluster_count = len(cluster_sizes)
+
+            # save memory
+            del cluster_sizes
+            del cluster_graph
+
+            # get minimal cluster sizes
+            if cluster_size_90P < min_cluster_size_to_use:
+                min_cluster_size_to_use = int(cluster_size_90P)
+            
+            # save information about the clusters
+            cluster_count_csv = self.directory / "cluster_sizes.csv"
+            temp_cluster_count = {
+                "datetime": self.pipeline_start_time,
+                "class_name": class_name,
+                "cluster_count": cluster_count,
+                "cluster_sizes_min": min_cluster_size,
+                "cluster_sizes_90P": cluster_size_90P,
+                "cluster_sizes_max": max_cluster_size
+            }
+            CSVUtils.appendcsv(
+                data_dict=[temp_cluster_count],
+                fieldnames=temp_cluster_count.keys(),
+                file_path=cluster_count_csv,
+            )
+  
+        return min_cluster_size_to_use
+            
+
     def partition_proteins(
-        self, clustering_identity_threshold, k_partitions=5, get_cluster_sizes=False
+        self, clustering_identity_threshold, max_cluster_size, k_partitions=5
     ):
         """Partion the proteins.
 
@@ -203,7 +257,7 @@ class DatabasePipeline(Pipeline):
                 4. sequence
         """
         for class_info in self.config_object.get_classes():
-            class_name = class_info.get("name")
+            class_name = class_info.get("name") # TODO: move to config_object
             logging.info(f"\t Partitioning class {k_partitions}-fold: {class_name}")
 
             # get path to proteins before and after clustering.
@@ -215,36 +269,19 @@ class DatabasePipeline(Pipeline):
             )
 
             # get clusters as Dict
-            # TODO: should done without storing all clusters into  memory.
+            # TODO: should be done without storing all clusters into  memory.
             cluster_graph = self.clustering_tool_adapter.get_clusters(fasta_clustered)
 
             # randomize the clusters
             randomized_clusters = list(cluster_graph.keys())
             np.random.shuffle(randomized_clusters)
 
-            # save cluster sizes to csv
-            if get_cluster_sizes:
-                cluster_count_csv = self.directory / "cluster_sizes.csv"
-                temp_cluster_count = {
-                    "datetime": self.pipeline_start_time,
-                    "class_name": class_name,
-                    "cluster_count": len(cluster_graph.keys()),
-                    "cluster_sizes": "\t".join(
-                        [str(len(cluster)) for cluster in cluster_graph.values()]
-                    ),
-                }
-                CSVUtils.appendcsv(
-                    data_dict=[temp_cluster_count],
-                    fieldnames=temp_cluster_count.keys(),
-                    file_path=cluster_count_csv,
-                )
-
             # obtain a dictionary of protein -> partition
             protein2partition = {}
             for i, cluster_id in enumerate(randomized_clusters):
                 cluster_partition = (i % k_partitions) + 1
                 # assign clusters to the same partition
-                for protein_accesion in cluster_graph[cluster_id]:
+                for protein_accesion in cluster_graph[cluster_id][:max_cluster_size]:
                     protein2partition[protein_accesion] = cluster_partition
 
             # delete graph to save some space
@@ -264,10 +301,6 @@ class DatabasePipeline(Pipeline):
                         partition = protein2partition[accession[:19]]
                         output_csv.write(
                             f"{partition},{accession},{protein},{len(protein)}\n"
-                        )
-                    else:
-                        logging.warning(
-                            f"protein {accession} was not found in clusters"
                         )
 
     def run(self):
@@ -301,8 +334,13 @@ class DatabasePipeline(Pipeline):
 
         # Step 4: create k-fold partitioned clusters.
         logging.info("Step 4 - Create k-fold partitions...")
+        min_cluster_size = self.get_min_partition_size(
+            clustering_identity_threshold=self.config_object.get_clustering_threshold()
+        )
+        min_cluster_size = 100
         self.partition_proteins(
             clustering_identity_threshold=self.config_object.get_clustering_threshold(),
+            max_cluster_size=min_cluster_size,
             k_partitions=self.config_object.get_k_partition_count(),
         )
         logging.info("Step 4 (Finished) - Create k-fold partitions...")

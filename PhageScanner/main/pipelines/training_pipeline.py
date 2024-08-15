@@ -4,9 +4,11 @@ import logging
 import os
 from pathlib import Path
 from typing import Dict, Union
+import gc
 
 import numpy as np
 import pandas as pd
+import swifter
 
 from PhageScanner.main import utils
 from PhageScanner.main.exceptions import IncorrectValueError
@@ -64,6 +66,7 @@ class TrainingPipeline(Pipeline):
         for class_name in model_classes:
             # Read the csv file into a pandas DataFrame
             class_name = class_name.get("name")
+            logging.debug(f"Combining class {class_name} into the dataframe.")
             class_path = self.config_object.get_csv_path_from_name(
                 class_name, self.db_directory
             )
@@ -117,7 +120,7 @@ class TrainingPipeline(Pipeline):
             # create a balanced partition.
             balanced_partition_df_list = []
             for class_index in partition_df["class"].unique():
-                # get proteins corresponding to the  class index.
+                # get proteins corresponding to the class index.
                 class_df: pd.DataFrame = partition_df[
                     partition_df["class"] == class_index
                 ]
@@ -287,11 +290,10 @@ class TrainingPipeline(Pipeline):
             self.extract_feature_vector(model_name)
             logging.info(f"Step 4.{iteration} (Finished) - Feature Extraction...")
 
-            # TODO: feature selection
-
             # train model
             logging.info(f"Step 4.{iteration} - k-fold testing model: {model_name}...")
             kfold_iteration = 0
+            bestmodel_f1score = 0
             for x_train, y_train, x_test, y_test in self.get_kfold_training():
                 # obtain model.
                 model_predictor_name = self.config_object.get_predictor_model_name(
@@ -301,7 +303,7 @@ class TrainingPipeline(Pipeline):
 
                 # train model.
                 logging.info(f"Training Model: {model_name}...")
-                model_object.train(x_train, y_train)
+                model_object.train(x_train, y_train, x_test, y_test)
                 logging.info(f"(Finished) Training Model: {model_name}...")
 
                 # test trained model.
@@ -317,8 +319,11 @@ class TrainingPipeline(Pipeline):
                 )
 
                 # save the model.
-                path2savemodel = self.directory / f"{model_name}"
-                model_object.save(path2savemodel)
+                model_f1score = np.average([float(i) for i in model_results["f1score"].split("\t")])
+                if model_f1score > bestmodel_f1score:
+                    bestmodel_f1score = model_f1score
+                    path2savemodel = self.directory / f"{model_name}"
+                    model_object.save(path2savemodel)
 
                 # make sure saved model works.
                 new_model = model_object.load(path2savemodel)
@@ -326,6 +331,13 @@ class TrainingPipeline(Pipeline):
 
                 # increment the kfold iteration
                 kfold_iteration += 1
+                
+                # free up memory
+                del x_train, y_train, x_test, y_test
+                gc.collect()
+
+                if kfold_iteration >= 3:
+                    break
 
             logging.info(
                 f"Step 4.{iteration} (Finished) - k-fold testing model: {model_name}..."

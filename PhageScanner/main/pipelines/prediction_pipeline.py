@@ -39,7 +39,7 @@ class PredictionPipelineType(Enum):
             if name == pipeline_type.value:
                 logging.info(f"prediction type: {pipeline_type}")
                 return pipeline_type
-        raise ValueError("Unknown prediction pipeline type")
+        raise ValueError(f"Unknown prediction pipeline type: {name}. Must be: {",".join([predtype.value for predtype in PredictionPipelineType])}")
 
 
 class PredictionPipeline(Pipeline):

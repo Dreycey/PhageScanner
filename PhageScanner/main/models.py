@@ -30,10 +30,14 @@ from keras.layers import (
     Dropout,
     Flatten,
     MaxPooling1D,
+    Embedding,
+    Bidirectional,
+    Input,
+    GlobalMaxPooling1D
 )
 from keras.models import Sequential, load_model
 from keras.optimizers import Adam
-from keras.regularizers import l1
+from keras.regularizers import l1, l2
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -67,6 +71,7 @@ class ModelNames(Enum):
 
     svm = "SVM"
     ffnn = "FFNN"
+    phagescanner_ffn = "PhagescannerFFNN"
     multinaivebayes = "MULTINAIVEBAYES"
     gradboost = "GRADBOOST"
     randomforest = "RANDOMFOREST"
@@ -74,6 +79,7 @@ class ModelNames(Enum):
     logreg = "LOGREG"
     cnn = "CNN"
     rnn = "RNN"
+    rnn2 = "RNN2"
 
     @classmethod
     def get_model(cls, name):
@@ -81,6 +87,7 @@ class ModelNames(Enum):
         name2adapter = {
             cls.svm.value: SVCMultiClassModel(),
             cls.ffnn.value: FFNNMultiClassModel(),
+            cls.phagescanner_ffn.value: PhageScannerFFNNMultiClassModel(),
             cls.multinaivebayes.value: MultiNaiveBayesClassModel(),
             cls.gradboost.value: GradientBoostingClassModel(),
             cls.randomforest.value: RandomForestClassModel(),
@@ -88,6 +95,7 @@ class ModelNames(Enum):
             cls.logreg.value: LogRegClassModel(),
             cls.cnn.value: CNNMultiClassifier(),
             cls.rnn.value: RNNMultiClassifier(),
+            cls.rnn2.value: RNNMultiClassifier2(),
         }
         adapter = name2adapter.get(name)
 
@@ -109,12 +117,12 @@ class Model(ABC):
     """
 
     @abstractmethod
-    def train(self, x, y):
+    def train(self, train_x, train_y, test_x, test_y):
         """Train a binary classification model."""
         pass
 
     @abstractmethod
-    def predict(self, x, y):
+    def predict(self, test_x, test_y):
         """Use the model to predict a binary class."""
         pass
 
@@ -192,9 +200,11 @@ class ScikitModel(Model):
         model_obj.model = joblib.load(str(file_path) + cls.file_extension)
         return model_obj
 
-    def train(self, train_x, train_y):
+    def train(self, train_x, train_y, test_x, test_y):
         """Train the model."""
         self.model.fit(train_x, train_y)
+        avg_score = np.average(self.model.score(test_x, test_y))
+        print(f"model validation accuracy: {avg_score}")
 
     def predict(self, test_x):
         """Predict a classes for an array of input proteins."""
@@ -268,7 +278,11 @@ class GradientBoostingClassModel(ScikitModel):
     def __init__(self):
         """Instantiate a new GradientBoostingClassModel."""
         self.model = GradientBoostingClassifier(
-            n_estimators=10, learning_rate=1.0, max_depth=1, random_state=0
+            n_estimators=10,
+            learning_rate=1.0,
+            max_depth=1,
+            random_state=0,
+            verbose=True
         )
 
 
@@ -298,6 +312,85 @@ class FFNNMultiClassModel(KerasModel):
         model = Sequential()
         model.add(
             Dense(
+                feature_vector_length,
+                activation="relu",
+                input_dim=feature_vector_length,
+                kernel_initializer="random_uniform",
+            )
+        )
+
+        # hidden layers
+        model.add(Dropout(0.2))
+        model.add(Dense(200, activation="relu"))
+        model.add(Dropout(0.2))
+        model.add(Dense(200, activation="relu"))
+        model.add(Dropout(0.2))
+
+        # Add an output layer
+        model.add(Dense(number_of_classes, activation="softmax"))
+
+        # compile the model
+        opt=Adam(learning_rate=0.001,
+                 beta_1=0.9,
+                 beta_2=0.999,
+                 weight_decay=0.0,
+                 amsgrad=False
+        )
+        model.compile(
+            loss="sparse_categorical_crossentropy",
+            optimizer=opt,
+            metrics=["accuracy"]
+        )
+
+        return model
+
+    def train(self, train_x, train_y, test_x, test_y):
+        """Train an FFNN on multiclass data"""
+        if self.model is None:
+            self.model = self.build_model(
+                feature_vector_length=len(train_x[0]),
+                number_of_classes=max(train_y) + 1,
+            )
+
+        # set up early stopping criterion.
+        early_stopping = EarlyStopping(
+            monitor="loss",
+            mode='min',
+            verbose=2,
+            patience=5,
+            min_delta=0.02
+        )
+
+        # train the model
+        self.model.fit(
+            train_x,
+            train_y,
+            validation_data=(test_x, test_y),
+            epochs=200,
+            callbacks=[early_stopping],
+            batch_size=5000,
+            verbose=2,
+        )
+
+
+class PhageScannerFFNNMultiClassModel(KerasModel):
+    """Class defining the optimized FFNN."""
+
+    def __init__(self):
+        """Instantiate the FFNN model."""
+        self.model = None
+
+    def build_model(self, feature_vector_length, number_of_classes):
+        """Build the model from the feature vector length."""
+        logging.info(
+            f"Building FFNN model. Feature vector length: {feature_vector_length}"
+        )
+        logging.info(f"Building FFNN model. Number of classes: {number_of_classes}")
+
+        # initialize the constructor
+        model = Sequential()
+        model.add(
+            Dense(
                 100,
                 activation="relu",
                 input_shape=(feature_vector_length,),
@@ -308,6 +401,8 @@ class FFNNMultiClassModel(KerasModel):
         # hidden layers
         model.add(Dropout(0.2))
         model.add(Dense(200, activation="relu"))
+        model.add(Dropout(0.2))
+        model.add(Dense(2000, activation="relu"))
         model.add(Dropout(0.2))
         model.add(Dense(2000, activation="relu"))
         model.add(Dropout(0.2))
@@ -324,7 +419,7 @@ class FFNNMultiClassModel(KerasModel):
 
         return model
 
-    def train(self, train_x, train_y):
+    def train(self, train_x, train_y, test_x, test_y):
         """Train an FFNN on multiclass data"""
         if self.model is None:
             self.model = self.build_model(
@@ -334,7 +429,7 @@ class FFNNMultiClassModel(KerasModel):
 
         # set up early stopping criterion.
         early_stopping = EarlyStopping(
-            monitor="loss",
+            monitor="val_loss",
             min_delta=0.01,
             patience=2,
             verbose=1,
@@ -349,11 +444,77 @@ class FFNNMultiClassModel(KerasModel):
             train_x,
             train_y,
             epochs=300,
+            validation_data=(test_x, test_y),
             callbacks=[early_stopping],
             batch_size=32,
             verbose=1,
         )
 
+class RNNMultiClassifier2(KerasModel):
+    """RNN MultiClassifier built"""
+
+    def __init__(self):
+        """Initialize the RNN MultiClassifier."""
+        self.model = None
+
+    def build_model(self, row_length, number_of_classes, max_length=1000):
+        """Build the RNN Model.
+
+        Description:
+            Sets the layers and parameters for the RNN. The last functionality
+            of this method is comiling the model.
+        """
+        # model
+        model = Sequential()
+        model.add(Input(shape=(max_length,)))
+        model.add(Embedding(21, 128, input_length=max_length))
+        model.add(
+            Bidirectional(LSTM(64,
+                               kernel_regularizer=l2(0.01),
+                               recurrent_regularizer=l2(0.01), 
+                               bias_regularizer=l2(0.01))
+        ))
+        model.add(Dropout(0.3))
+        model.add(Dense(number_of_classes, activation="softmax"))
+
+        # Compile the model
+        model.compile(
+            loss="sparse_categorical_crossentropy",
+            optimizer="adam",
+            metrics=["accuracy"],
+        )
+
+        return model
+
+    def train(self, train_x, train_y, test_x, test_y):
+        """Train an RNN on multiclass data"""
+        if self.model is None:
+            self.model = self.build_model(
+                row_length=len(train_x[0]),
+                number_of_classes=max(train_y) + 1,
+            )
+
+        # set up early stopping criterion.
+        early_stopping = EarlyStopping(
+            monitor="val_loss",
+            min_delta=0.01,
+            patience=2,
+            verbose=1,
+            mode="auto",
+            baseline=None,
+            restore_best_weights=True,
+            start_from_epoch=0,
+        )
+
+        self.model.fit(
+            train_x,
+            train_y,
+            validation_data=(test_x, test_y),
+            epochs=300,
+            callbacks=[early_stopping],
+            batch_size=32,
+            verbose=1,
+        )
 
 class RNNMultiClassifier(KerasModel):
     """RNN MultiClassifier built"""
@@ -393,7 +554,7 @@ class RNNMultiClassifier(KerasModel):
 
         return model
 
-    def train(self, train_x, train_y):
+    def train(self, train_x, train_y, test_x, test_y):
         """Train an RNN on multiclass data"""
         if self.model is None:
             self.model = self.build_model(
@@ -417,6 +578,7 @@ class RNNMultiClassifier(KerasModel):
         self.model.fit(
             train_x,
             train_y,
+            validation_data=(test_x, test_y),
             epochs=300,
             callbacks=[early_stopping],
             batch_size=32,
@@ -443,23 +605,26 @@ class CNNMultiClassifier(KerasModel):
         # Convolutional layer
         model.add(
             Conv1D(
-                filters=32,
-                kernel_size=3,
+                filters=700,
+                kernel_size=9,
                 activation="relu",
                 input_shape=(row_length, column_length),
             )
         )
         # Max pooling layer
-        model.add(MaxPooling1D(pool_size=4))
+        model.add(GlobalMaxPooling1D())
         # Batch normalization layer
         model.add(BatchNormalization())
+        model.add(Dropout(0.55))
         # Flatten the output from the previous layer
         model.add(Flatten())
         # Fully connected layer
-        model.add(Dense(64, activation="relu", kernel_regularizer=l1(0.01)))
-        # Compile the model
-        # if number_of_classes > 2:
+        model.add(Dense(600, activation="relu", kernel_regularizer=l1(0.01)))
+        model.add(Dropout(0.55))
+        # Final output layer
         model.add(Dense(number_of_classes, activation="softmax"))
+        
+        # Compile the model
         model.compile(
             loss="sparse_categorical_crossentropy",
             optimizer="adam",
@@ -468,7 +633,7 @@ class CNNMultiClassifier(KerasModel):
 
         return model
 
-    def train(self, train_x, train_y):
+    def train(self, train_x, train_y, test_x, test_y):
         """Train an CNN on multiclass data"""
         if self.model is None:
             self.model = self.build_model(
@@ -492,9 +657,10 @@ class CNNMultiClassifier(KerasModel):
         self.model.fit(
             train_x,
             train_y,
-            epochs=300,
+            validation_data=(test_x, test_y),
+            epochs=80,
             callbacks=[early_stopping],
-            batch_size=32,
+            batch_size=256,
             verbose=1,
         )
 
@@ -550,7 +716,7 @@ class BlastClassifier(BLASTWrapper, Model):
         model_obj = cls(database_path=Path(file_path) / "BLAST_DB")
         return model_obj
 
-    def train(self, train_x: List[str], train_y: List[int]):
+    def train(self, train_x: List[str], train_y: List[int], test_x, test_y):
         """Create a blast database using model template.
 
         Description:
