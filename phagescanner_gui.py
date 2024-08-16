@@ -10,9 +10,9 @@ import argparse
 from enum import Enum
 from pathlib import Path
 import sys
-from src.gui import feature_plotter
+from PhageScanner.gui import feature_plotter
 import tkinter as tk
-from src.gui.gui_frames import Application
+from PhageScanner.gui.gui_frames import Application
 
 
 
