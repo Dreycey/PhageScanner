@@ -95,29 +95,18 @@ class PhanotateWrapper(OrfFinderWrapper):
     @staticmethod
     def get_info_from_name(fasta_entry_name: str):
         """Get information from the fasta entry name."""
-        # First parsing strategy with regex
-        pattern = r"([^_\s]+)_CDS_\[(\d+)\.\.(\d+)\] \[note=score:(-?\d+\.\d+[eE][+-]\d+)\]"
-        logging.info(f"Attempting to parse with regex: {fasta_entry_name}")
+        pattern = r"([^_>\s]+)_CDS_\[(complement\()?(\d+)\.\.(\d+)\)?\] \[note=score:([-+]?\d+\.\d+[eE][+-]\d+)\]"
+        logging.debug(f"Attempting to parse with regex: {fasta_entry_name}")
         match = re.search(pattern, fasta_entry_name)
-        
-        if match:
-            accession_id = match.group(1)
-            start_pos = int(match.group(2))
-            end_pos = int(match.group(3))
-            score = float(match.group(4))
-            logging.info(f"Parsed with regex: {accession_id}, {start_pos}, {end_pos}, {score}")
-            return accession_id, start_pos, end_pos, score
 
-        # Fallback parsing to older phanotate output if the first method fails.
-        logging.info("Regex failed, attempting to parse with split method")
         try:
-            parts = fasta_entry_name.split(" ")
-            accession_id = ".".join(parts[0].split(".")[:-1])
-            start_pos = int(parts[1].replace("[START=", "").replace("]", ""))
-            score = float(parts[2].replace("[SCORE=", "").replace("]", ""))
-            end_pos = -1  # Default or fallback end_pos
-            logging.info(f"Parsed with split: {accession_id}, {start_pos}, {end_pos}, {score}")
-            return accession_id, start_pos, end_pos, score
+            accession_id = match.group(1)
+            is_complement = bool(match.group(2))
+            start_pos = int(match.group(3))
+            stop_pos = int(match.group(4))
+            score = float(match.group(5))
+            logging.debug(f"Parsing values: {accession_id}, {start_pos}, {stop_pos}, {score}")
         except IndexError as e:
             logging.error("Parsing failed: Incorrect format")
-            raise ValueError("Provided fasta entry name is in an incorrect format") from e
+        
+        return accession_id, start_pos, stop_pos, score, is_complement

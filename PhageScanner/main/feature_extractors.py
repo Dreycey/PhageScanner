@@ -16,6 +16,7 @@ import logging
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Dict, List, Optional
+from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
@@ -116,7 +117,7 @@ class ProteinFeatureExtraction(ABC):
         "Y": {"C": 9, "H": 9, "N": 1, "O": 2, "S": 0},  # Tyrosine
     }
 
-    canonical_amino_acids = set(sorted(list(amino_acid_atom_counts.keys())))
+    canonical_amino_acids = sorted(amino_acid_atom_counts.keys())
 
     @abstractmethod
     def extract_features(self, protein: str):
@@ -498,7 +499,7 @@ class SequentialOneHot(ProteinFeatureExtraction):
     def __init__(self, parameters: Optional[Dict] = None):
         """Instantiate tokenization extract method."""
         self.aa2index = {aa: ind for ind, aa in enumerate(self.canonical_amino_acids)}
-        self.matrix_length = 2000
+        self.matrix_length = 500
 
     def extract_features(self, protein: str):
         """Obtain an tokenization of the protein sequence."""
@@ -580,7 +581,7 @@ class IntegerEncoding(ProteinFeatureExtraction):
 
         self.aa_dict = aa_dict
 
-    def extract_features(self, protein: str, max_length=1000):
+    def extract_features(self, protein: str, max_length=500):
         """ Integer encoding for a protein. """
         integer_encoding = []
         for amino_acid in protein:
@@ -721,6 +722,36 @@ class SequentialProteinFeatureAggregator:
             count += 1
 
         return [sequential_features]
+    
+def extract_feature_vector(proteins, model_features, segment_size:int=0):
+    """ Extract the feature vector from a list/array of proteins. """
+    logging.info(f"Starting to extract protein features.")
+
+    # get feature extractors.
+    feature_list = []
+    for feature_name, parameters in model_features:
+        extractor = FeatureExtractorNames.get_extractor(feature_name, parameters)
+        feature_list.append(extractor)
+
+    # create feature aggregator (combines features)
+    if segment_size:
+        aggregator = SequentialProteinFeatureAggregator(
+            extractors=feature_list, segment_size=segment_size
+        )
+    else:
+        aggregator = ProteinFeatureAggregator(extractors=feature_list)
+
+    # extract features
+    features = []
+    if len(proteins) < 1000:
+        features = [aggregator.extract_features(protein) for protein in proteins]
+    else:
+        with ProcessPoolExecutor() as executor:
+            features = list(executor.map(aggregator.extract_features, proteins))
+
+    logging.info(f"Finished extracting features.")
+    
+    return np.vstack(np.array(features))
 
 
 if __name__ == "__main__":

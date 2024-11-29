@@ -96,11 +96,11 @@ There are three fundamental pipelines in the PhageScanner tool. Each of these pi
     ```
     - Example (genomes; though sequencing reads and proteins can be used as input)
     ```
-    python phagescanner.py predict -t "genome" -c configs/multiclass_config.yaml -n "OUTPREFIX" -tdir .\training_output\ -o prediction_output -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
+    python phagescanner.py predict -t genome -c configs/multiclass_config.yaml -n "OUTPREFIX" -tdir .\training_output\ -o prediction_output -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
     ```
     - Example using Docker (genomes)
     ```
-    docker run --rm -v "$(pwd)/configs:/app/configs" -v "$(pwd)/examples:/app/examples" -v "$(pwd)/prediction_output:/app/prediction_output" -v "$(pwd)/training_output:/app/training_output" dreyceyalbin/phagescanner predict -t "genome" -c /app/configs/multiclass_config.yaml -o /app/prediction_output -n "OUTPREFIX" -tdir .\training_output\ -i /app/examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
+    docker run --rm -v "$(pwd)/configs:/app/configs" -v "$(pwd)/examples:/app/examples" -v "$(pwd)/prediction_output:/app/prediction_output" -v "$(pwd)/training_output:/app/training_output" dreyceyalbin/phagescanner predict -t genome -c /app/configs/multiclass_config.yaml -o /app/prediction_output -n "OUTPREFIX" -tdir .\training_output\ -i /app/examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
     ```
 
 # PhageScanner GUI

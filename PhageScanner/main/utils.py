@@ -12,7 +12,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Iterator, Tuple, Optional, Any
 
 import pandas as pd
 import yaml
@@ -202,17 +202,12 @@ class TrainingConfig(ConfigUtils):
         models = [m["name"] for m in self.config["models"]]
         return models
 
-    def get_model_features(self, model_name):
+    def get_model_features(self, model_name: str) -> Iterator[Tuple[str, Optional[Any]]]:
         """Get the model features for a given model."""
         for m in self.config["models"]:
             if m["name"] == model_name:
                 for feature_info in m["features"]:
-                    feature_name = feature_info["name"]
-                    if "parameters" in feature_info:
-                        parameters = feature_info["parameters"]
-                    else:
-                        parameters = None
-                    yield feature_name, parameters
+                    yield feature_info["name"], feature_info.get("parameters")
 
     def sequential(self, model_name):
         """Return True if the model takes in sequential data."""

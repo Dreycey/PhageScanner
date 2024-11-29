@@ -356,9 +356,9 @@ class FFNNMultiClassModel(KerasModel):
         early_stopping = EarlyStopping(
             monitor="loss",
             mode='min',
-            verbose=2,
-            patience=5,
-            min_delta=0.02
+            verbose=1,
+            patience=1,
+            min_delta=0.01
         )
 
         # train the model
@@ -366,10 +366,10 @@ class FFNNMultiClassModel(KerasModel):
             train_x,
             train_y,
             validation_data=(test_x, test_y),
-            epochs=200,
+            epochs=5,
             callbacks=[early_stopping],
             batch_size=5000,
-            verbose=2,
+            verbose=1
         )
 
 
@@ -431,7 +431,7 @@ class PhageScannerFFNNMultiClassModel(KerasModel):
         early_stopping = EarlyStopping(
             monitor="val_loss",
             min_delta=0.01,
-            patience=2,
+            patience=1,
             verbose=1,
             mode="auto",
             baseline=None,
@@ -457,7 +457,7 @@ class RNNMultiClassifier2(KerasModel):
         """Initialize the RNN MultiClassifier."""
         self.model = None
 
-    def build_model(self, row_length, number_of_classes, max_length=1000):
+    def build_model(self, row_length, number_of_classes, max_length=500):
         """Build the RNN Model.
 
         Description:
@@ -466,8 +466,8 @@ class RNNMultiClassifier2(KerasModel):
         """
         # model
         model = Sequential()
-        model.add(Input(shape=(max_length,)))
-        model.add(Embedding(21, 128, input_length=max_length))
+        model.add(Input(shape=(row_length,)))
+        model.add(Embedding(21, 50, input_length=row_length))
         model.add(
             Bidirectional(LSTM(64,
                                kernel_regularizer=l2(0.01),
@@ -497,8 +497,8 @@ class RNNMultiClassifier2(KerasModel):
         # set up early stopping criterion.
         early_stopping = EarlyStopping(
             monitor="val_loss",
-            min_delta=0.01,
-            patience=2,
+            min_delta=0.1,
+            patience=1,
             verbose=1,
             mode="auto",
             baseline=None,
@@ -510,7 +510,7 @@ class RNNMultiClassifier2(KerasModel):
             train_x,
             train_y,
             validation_data=(test_x, test_y),
-            epochs=300,
+            epochs=5,
             callbacks=[early_stopping],
             batch_size=32,
             verbose=1,

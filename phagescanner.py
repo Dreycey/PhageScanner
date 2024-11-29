@@ -9,6 +9,8 @@ For help: python phagescanner.py -h
 from enum import Enum
 import argparse
 import sys
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1' # prevent TF from showing logs.
 
 from pathlib import Path
 import logging

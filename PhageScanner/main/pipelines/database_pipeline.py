@@ -334,13 +334,13 @@ class DatabasePipeline(Pipeline):
 
         # Step 4: create k-fold partitioned clusters.
         logging.info("Step 4 - Create k-fold partitions...")
-        min_cluster_size = self.get_min_partition_size(
+        max_cluster_size = self.get_min_partition_size(
             clustering_identity_threshold=self.config_object.get_clustering_threshold()
         )
-        min_cluster_size = 100
+        max_cluster_size = 10
         self.partition_proteins(
             clustering_identity_threshold=self.config_object.get_clustering_threshold(),
-            max_cluster_size=min_cluster_size,
+            max_cluster_size=max_cluster_size,
             k_partitions=self.config_object.get_k_partition_count(),
         )
         logging.info("Step 4 (Finished) - Create k-fold partitions...")

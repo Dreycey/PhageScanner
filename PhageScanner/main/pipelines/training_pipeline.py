@@ -3,16 +3,17 @@
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Union, Iterator, Optional, Tuple, Any
 import gc
 
 import numpy as np
 import pandas as pd
-import swifter
+from imblearn.over_sampling import SMOTE
+from imblearn.combine import SMOTEENN
 
 from PhageScanner.main import utils
 from PhageScanner.main.exceptions import IncorrectValueError
-from PhageScanner.main.feature_extractors import ProteinFeatureExtraction
+from PhageScanner.main.feature_extractors import ProteinFeatureExtraction, extract_feature_vector
 from PhageScanner.main.models import ModelNames
 from PhageScanner.main.pipelines.pipeline_interface import Pipeline
 
@@ -34,123 +35,111 @@ class TrainingPipeline(Pipeline):
         self.number_of_classes = 0  # updated during pipeline run.
         self.db_directory = db_directory
 
-        # pandas dataframe holds all of the training data
-        self.dataframe = pd.DataFrame()
-
-        # dictionary to map index to class name
-        self.class2name = dict()
-
         # create directory if it doesn't exist
         if not os.path.exists(self.directory):
             os.mkdir(self.directory)
-
-    def combine_partitions(self):
-        """Combine the partitions for different classes CSVs.
-
-        Description:
-            This method combines classes into different partitions.
-            The output of using this method void, since the self.dataframe
-            is added to for each input. In addition, the input value ("value")
-            is added to each input dataframe, for the new column "class",
-            before adding to self.dataframe.
-
-        Args:
-            data (.csv file path): contains a csv file path.
-        """
-        index = 0
-        # get classes
+            
+        # Create class name to index mapping.
         model_classes = self.config_object.get_classes()
-
-        # save number of classes
         self.number_of_classes = len(model_classes)
-        for class_name in model_classes:
-            # Read the csv file into a pandas DataFrame
+        
+        # Create class name to index mapping.
+        self.class2index = dict()
+        self.class2filepath = dict()
+        for index, class_name in enumerate(model_classes):
             class_name = class_name.get("name")
-            logging.debug(f"Combining class {class_name} into the dataframe.")
             class_path = self.config_object.get_csv_path_from_name(
                 class_name, self.db_directory
             )
-            df = pd.read_csv(class_path)
+            self.class2index[class_name] = index
+            self.class2filepath[class_name] = class_path
+            
+        # Get model information
+        models = self.config_object.get_models()
+        self.modelname2information = dict()
+        for model_name in models:
+            self.modelname2information[model_name] = {
+                'path2savemodel' : self.directory / f"{model_name}",
+                'model_features' : [i for i in self.config_object.get_model_features(model_name)],
+                'segement_size' : self.config_object.sequential(model_name),
+                'model_predictor_name' : self.config_object.get_predictor_model_name(model_name)       
+            }
 
-            # Add a new column 'class' with the provided value
-            # NOTE: index must be an integer.
-            df["class"] = index
+    @staticmethod
+    def create_combined_df(class2filepath, class2index):
+        """Create a Pandas dataframe from the combined partitions for different classes CSVs."""
+        dataframes = []
+        
+        for class_name, class_path in class2filepath.items():
+            logging.debug(f"Combining class {class_name} into the dataframe.")
+            df_tmp = pd.read_csv(class_path)
+            df_tmp["class"] = class2index[class_name]
+            dataframes.append(df_tmp)
 
-            # add information about class to name mapping
-            # NOTE: index must be an integer.
-            self.class2name[index] = class_name
+        # Concatenate all dataframes at once
+        combined_dataframe = pd.concat(dataframes, ignore_index=True)
+        
+        return combined_dataframe
 
-            # Append this data to the main dataframe
-            # NOTE: this is not optimal since Pandas
-            # DFs will result in quadratic behaviour due
-            # to duplicating the dataframe. However,
-            # here we expect few classes.
-            # see: https://stackoverflow.com/questions/36489576/
-            self.dataframe = pd.concat([self.dataframe, df])
-
-            index += 1
-
-        # only select columns needed
-        try:
-            self.dataframe = self.dataframe[["partition", "class", "protein"]]
-        except KeyError as ex:
-            raise IncorrectValueError(
-                f"Columns in {class_path} are not correct: {ex.message}"
-            )
-
-    def balance_partitions(self):
-        """Balance classes  within each partition.
-
-        Description:
-            Here we upsample the smaller classes with replacement. The
-            justification is that there may be large negative classes,
-            for example non-pvp, that contain more unique proteins. For the
-            models to learn these, we don't want to downsample. Likewise, if
-            there are really small classes, then the models would lose context
-            on other potential proteins within the other classes.
+    @staticmethod
+    def hybrid_sample_partitions(df, percentile: float = 50, interpolation: str = 'linear') -> pd.DataFrame:
         """
-        new_balanced_partitions_df = []
-        for partition in self.dataframe["partition"].unique():
-            partition_df = self.dataframe[self.dataframe["partition"] == partition]
+           Balance classes within each partition by upsampling smaller classes 
+           and downsampling larger classes based on an interpolated percentile.
+        """
+        balanced_partitions = []
 
-            # get smallest class size.
+        for partition, partition_df in df.groupby("partition"):
             class_sizes = partition_df["class"].value_counts()
-            max_class_size = max(class_sizes)
+            percentile_class_size = int(np.percentile(class_sizes, percentile, interpolation=interpolation))
 
-            # create a balanced partition.
-            balanced_partition_df_list = []
-            for class_index in partition_df["class"].unique():
-                # get proteins corresponding to the class index.
-                class_df: pd.DataFrame = partition_df[
-                    partition_df["class"] == class_index
-                ]
+            balanced_classes = []
+            for _, class_df in partition_df.groupby("class"):
+                if len(class_df) > percentile_class_size:
+                    sampled_df = class_df.sample(n=percentile_class_size, random_state=1)
+                else:
+                    sampled_df = class_df.sample(n=percentile_class_size, replace=True, random_state=1)
+                balanced_classes.append(sampled_df)
 
-                # add to balanced_partition_df_list
-                balanced_partition_df_list.append(class_df)
+            balanced_partitions.append(pd.concat(balanced_classes, ignore_index=True))
 
-                # get differrence from the max class size, then upsample w/ replacement
-                size_difference = max_class_size - len(class_df)
-                if size_difference > 0:
-                    balanced_class_df = class_df.sample(
-                        n=size_difference, random_state=1, replace=True
-                    )
-                    balanced_partition_df_list.append(balanced_class_df)
+        return pd.concat(balanced_partitions, ignore_index=True)
+        
+    def train_and_test_models(self, df, modelname2information):
+        """ Perform model training and testing. """
+        for model_name, model_information in modelname2information.items():
+            kfold_iteration = 0
+            path2savemodel, model_features, segement_size, model_predictor_name = (model_information['path2savemodel'],
+                                                                                   model_information['model_features'],
+                                                                                   model_information['segement_size'],
+                                                                                   model_information['model_predictor_name'])
+            for x_train, y_train, x_test, y_test in TrainingPipeline.get_kfold_training(df, model_features, segement_size):
+                logging.info(f"Training and testing model: {model_name} (Iteration {kfold_iteration})...")
 
-            # combine balanced classes for this partition.
-            balanced_partition_df = pd.concat(
-                balanced_partition_df_list, ignore_index=True
-            )
+                model_object = ModelNames.get_model(model_predictor_name)
+                model_object.train(x_train, y_train, x_test, y_test)
+                model_object.save(path2savemodel)
+                model_results = model_object.test(x_test, y_test)
 
-            # ensure the min class size is now the same as max.
-            assert max_class_size == min(balanced_partition_df["class"].value_counts())
+                TrainingPipeline.save_model_results(
+                    directory_to_save_results=self.directory,
+                    model_name=model_name,
+                    model_features=model_features,
+                    pipeline_start_time=self.pipeline_start_time,
+                    iteration=kfold_iteration,
+                    model_results=model_results,
+                )
 
-            # add balanced partition to new_balanced_partitions_df.
-            new_balanced_partitions_df.append(balanced_partition_df)
+                # increment the kfold iteration
+                kfold_iteration += 1
+                # free up memory
+                del x_train, y_train, x_test, y_test
+                gc.collect()
+                
+                logging.info(f"Finished Training and testing Model: {model_name} (Iteration {kfold_iteration})...")
 
-        # combine all balanced partitions to a single dataframe.
-        self.dataframe = pd.concat(new_balanced_partitions_df, ignore_index=True)
-
-    def get_kfold_training(self):
+    @staticmethod
+    def get_kfold_training(df, model_features, segment_size):
         """Get X_train, Y_train, X_test, Y_test.
 
         Description:
@@ -158,42 +147,31 @@ class TrainingPipeline(Pipeline):
             for training and testing to be performed based
             on how the data is partitioned.
         """
-        unique_partitions = self.dataframe["partition"].unique()
+        unique_partitions = df["partition"].unique()
         for test_partition in unique_partitions:
-            logging.debug("Obtaining training splits.")
-            # get partition.
-            test = self.dataframe[self.dataframe["partition"] == test_partition]
-            train = self.dataframe[self.dataframe["partition"] != test_partition]
+            test_df = df[df["partition"] == test_partition]
+            train_df = df[df["partition"] != test_partition]
 
-            # get testing and training splits.
-            x_test = np.vstack(test["features"].to_numpy())
-            y_test = test["class"].to_numpy()
-            x_train = np.vstack(train["features"].to_numpy())
-            y_train = train["class"].to_numpy()
+            x_train = extract_feature_vector(train_df["protein"].to_numpy(), model_features, segment_size)
+            y_train = train_df["class"].to_numpy()
+            x_test = extract_feature_vector(test_df["protein"].to_numpy(), model_features, segment_size)
+            y_test = test_df["class"].to_numpy()
 
-            logging.debug("Done: Obtaining training splits.")
+            # up and down sample
+            # sm = SMOTE(random_state=42)
+            # x_train, y_train = sm.fit_resample(x_train, y_train)
+            
+            smote_enn = SMOTEENN(random_state=0)
+            x_train, y_train = smote_enn.fit_resample(x_train, y_train)
+
             yield x_train, y_train, x_test, y_test
 
-    def save_class_mapping(self):
-        """Save class mapping."""
-        # obtain information to save about class mapping.
-        index2class_name_file = self.directory / "index2class_name.csv"
-        output_index2class = {"datetime": self.pipeline_start_time}
-
-        # convert keys to string for saving.
-        for index, class_name in self.class2name.items():
-            output_index2class[str(index)] = class_name
-
-        # save the index to class mapping.
-        utils.CSVUtils.appendcsv(
-            data_dict=[output_index2class],  # input must be an array.
-            fieldnames=output_index2class.keys(),
-            file_path=index2class_name_file,
-        )
-
+    @staticmethod
     def save_model_results(
-        self,
+        directory_to_save_results: Path,
         model_name: str,
+        model_features: Iterator[Tuple[str, Optional[Any]]],
+        pipeline_start_time,
         iteration: int,
         model_results: Dict[str, Union[str, float, str]],
     ):
@@ -208,7 +186,7 @@ class TrainingPipeline(Pipeline):
         """
         # save the confusion matrix
         confusion_matrix_output_path = (
-            self.directory / f"{model_name}_confusion_matrix.csv"
+            directory_to_save_results / f"{model_name}_confusion_matrix.csv"
         )
         np.savetxt(
             confusion_matrix_output_path,
@@ -219,7 +197,7 @@ class TrainingPipeline(Pipeline):
         del model_results["confusion_matrix"]
 
         # Save the f1score, accuracy, and precision
-        output_path = self.directory / "model_results.csv"
+        output_path = directory_to_save_results / "model_results.csv"
         csv_file_headers = [
             "datetime",
             "model",
@@ -235,7 +213,7 @@ class TrainingPipeline(Pipeline):
 
         # obtain a list of features and parameters.
         features = []
-        for feature, params in self.config_object.get_model_features(model_name):
+        for feature, params in model_features:
             if params:
                 param_strs = [f"{k}={v}" for k, v in params.items()]
                 params_text = "; ".join(param_strs)
@@ -245,10 +223,12 @@ class TrainingPipeline(Pipeline):
             features.append(feature_string)
 
         # add columns not originally present in the dataframe
-        model_results["datetime"] = self.pipeline_start_time
-        model_results["model"] = model_name
-        model_results["kfold_iteration"] = iteration
-        model_results["features"] = features
+        model_results.update({
+            "datetime": pipeline_start_time,
+            "model": model_name,
+            "kfold_iteration": iteration,
+            "features": features
+        })
 
         # convert columns with many entries to strings
         for key in ["f1score", "precision", "recall", "features"]:
@@ -263,82 +243,24 @@ class TrainingPipeline(Pipeline):
 
     def run(self):
         """Run the training pipeline."""
-        # Step 1: combine partitions from different classes.
-        logging.info("Step 1 - Class balance and combine partitions...")
-        self.combine_partitions()
-        self.save_class_mapping()
-        logging.info("Step 1 (Finished) - Class balance and combine partitions...")
+        # Step 1: Combine partitions from different classes.
+        logging.info("Step 1 - Combine partitions...")
+        combined_dataframe = TrainingPipeline.create_combined_df(self.class2filepath, self.class2index)
+        logging.info("Step 1 (Finished) - Combine partitions...")
 
-        # Step 2: clean proteins
+        # Step 2: Clean proteins
         logging.info("Step 2 - Cleaning proteins...")
-        self.dataframe["protein"] = self.dataframe["protein"].apply(
+        combined_dataframe["protein"] = combined_dataframe["protein"].apply(
             ProteinFeatureExtraction.clean_protein
         )
         logging.info("Step 2 (Finished) - Cleaning proteins...")
 
         # Step 3: Balance the classes with different partitions.
         logging.info("Step 3 - Balancing classes in each partition...")
-        self.balance_partitions()
+        #combined_dataframe = TrainingPipeline.hybrid_sample_partitions(combined_dataframe, percentile=70)
         logging.info("Step 3 (Finished) - Balancing classes in each partition...")
 
-        # Step 3: extract features and train.
-        logging.info("Step 4 - Training Models")
-        models = self.config_object.get_models()
-        for iteration, model_name in enumerate(models):
-            # obtain features.
-            logging.info(f"Step 4.{iteration} - Feature Extraction...")
-            self.extract_feature_vector(model_name)
-            logging.info(f"Step 4.{iteration} (Finished) - Feature Extraction...")
-
-            # train model
-            logging.info(f"Step 4.{iteration} - k-fold testing model: {model_name}...")
-            kfold_iteration = 0
-            bestmodel_f1score = 0
-            for x_train, y_train, x_test, y_test in self.get_kfold_training():
-                # obtain model.
-                model_predictor_name = self.config_object.get_predictor_model_name(
-                    model_name
-                )
-                model_object = ModelNames.get_model(model_predictor_name)
-
-                # train model.
-                logging.info(f"Training Model: {model_name}...")
-                model_object.train(x_train, y_train, x_test, y_test)
-                logging.info(f"(Finished) Training Model: {model_name}...")
-
-                # test trained model.
-                logging.info(f"Testing Model: {model_name}...")
-                model_results = model_object.test(x_test, y_test)
-                logging.info(f"(Finished) Testing Model: {model_name}...")
-
-                # save model results.
-                self.save_model_results(
-                    model_name=model_name,
-                    iteration=kfold_iteration,
-                    model_results=model_results,
-                )
-
-                # save the model.
-                model_f1score = np.average([float(i) for i in model_results["f1score"].split("\t")])
-                if model_f1score > bestmodel_f1score:
-                    bestmodel_f1score = model_f1score
-                    path2savemodel = self.directory / f"{model_name}"
-                    model_object.save(path2savemodel)
-
-                # make sure saved model works.
-                new_model = model_object.load(path2savemodel)
-                new_model.test(x_test, y_test)
-
-                # increment the kfold iteration
-                kfold_iteration += 1
-                
-                # free up memory
-                del x_train, y_train, x_test, y_test
-                gc.collect()
-
-                if kfold_iteration >= 3:
-                    break
-
-            logging.info(
-                f"Step 4.{iteration} (Finished) - k-fold testing model: {model_name}..."
-            )
+        # Step 4: Extract features and train.
+        logging.info("Step 4 - Training and Testing Models")
+        self.train_and_test_models(combined_dataframe, self.modelname2information)
+        logging.info("Step 4 (Finished) - Training and Testing Models")
