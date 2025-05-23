@@ -39,7 +39,8 @@ class PredictionPipelineType(Enum):
             if name == pipeline_type.value:
                 logging.info(f"prediction type: {pipeline_type}")
                 return pipeline_type
-        raise ValueError("Unknown prediction pipeline type")
+        possible_prediction_types = ",".join([predtype.value for predtype in PredictionPipelineType])
+        raise ValueError(f"Unknown prediction pipeline type: {name}. Must be: {possible_prediction_types}")
 
 
 class PredictionPipeline(Pipeline):
@@ -105,7 +106,7 @@ class PredictionPipeline(Pipeline):
 
         return full_assembly_path
 
-    def get_proteins(self):
+    def get_proteins(self, orf_score_threshold=-1000):
         """Get the proteins from an input set of contigs/genomes.
 
         Description:
@@ -114,20 +115,20 @@ class PredictionPipeline(Pipeline):
             the expected protein products.
         """
         # eventual outputs
-        orf_path = self.directory / (str(self.pipeline_name) + "_" + "orfs")
+        orf_path = self.directory / (str(self.pipeline_name) + "_orfs")
         orf_file_prefix_proteins = self.directory / (
-            str(self.pipeline_name) + "_" + "orfs" + "_proteins.csv"
+            str(self.pipeline_name) + "_orfs_proteins.csv"
         )
 
         # check if completed..
-        if (
-            os.path.exists(orf_file_prefix_proteins)
-            and os.stat(orf_file_prefix_proteins).st_size > 0
-        ):
-            message = f"(Skipping) Found ORF file CSV: '{orf_file_prefix_proteins}'. "
-            message += "Please delete this file if you'd like to rerun!"
-            logging.info(message)
-            return orf_file_prefix_proteins
+        # if (
+        #     os.path.exists(orf_file_prefix_proteins)
+        #     and os.stat(orf_file_prefix_proteins).st_size > 0
+        # ):
+        #     message = f"(Skipping) Found ORF file CSV: '{orf_file_prefix_proteins}'. "
+        #     message += "Please delete this file if you'd like to rerun!"
+        #     logging.info(message)
+        #     return orf_file_prefix_proteins
 
         # Get ORFs.
         orf_file_path = self.orffinder.find_orfs(
@@ -144,20 +145,27 @@ class PredictionPipeline(Pipeline):
         for orf_name, orf_sequence in FastaUtils.get_proteins(
             orf_file_path, withfullname=True
         ):
-            accession_id, start_pos, stop_pos, score = (
+            accession_id, start_pos, stop_pos, score, is_complement = (
                 self.orffinder.get_info_from_name(orf_name)
             )
+            
+            if score > orf_score_threshold:
+                continue
 
-            if stop_pos is None:
-                stop_pos = start_pos + len(orf_sequence)
+            # correct for compliments found
+            contiglen = accession2length[accession_id]
+            # if is_complement:
+            #     start_pos = contiglen - stop_pos
+            #     stop_pos = contiglen - start_pos
 
             # save to output file.
             orf_results = {
                 "accession": accession_id,
-                "length": accession2length[accession_id],
+                "length": contiglen,
                 "start_pos": start_pos,
                 "stop_pos": stop_pos,
                 "orf_score": score,
+                "is_complement": is_complement,
                 "protein": DNA.dna2protein(orf_sequence),
             }
             CSVUtils.appendcsv(
@@ -165,6 +173,7 @@ class PredictionPipeline(Pipeline):
                 fieldnames=orf_results.keys(),
                 file_path=orf_file_prefix_proteins,
             )
+            print(start_pos, stop_pos)
 
         return orf_file_prefix_proteins
 
@@ -187,7 +196,7 @@ class PredictionPipeline(Pipeline):
         # for each model, get predictions.
         for model in self.config_object.get_model_names():
             # extract features from each protein.
-            self.extract_feature_vector(model)
+            x_test = self.extract_feature_vector(model, self.dataframe["protein"].to_numpy())
 
             # instantiate the model.
             model_path = self.config_object.get_model_path(
@@ -197,11 +206,7 @@ class PredictionPipeline(Pipeline):
             model_object = ModelNames.get_model(model_predictor_name)
             model_object = model_object.load(model_path)
 
-            # get the model classes.
-            index2class = self.config_object.get_model_classes(model)
-
             # predict features from proteins.
-            x_test = np.vstack(self.dataframe["features"].to_numpy())
             predictions, probabilities = model_object.predict(x_test)
             self.dataframe[model] = predictions
 
@@ -214,6 +219,7 @@ class PredictionPipeline(Pipeline):
                 )
 
             # replace values with class names.
+            index2class = self.config_object.get_model_classes(model)
             self.dataframe[model] = self.dataframe[model].replace(index2class)
 
     def run(self):

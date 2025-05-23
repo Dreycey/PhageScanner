@@ -1,5 +1,5 @@
 clustering:
-  deduplication-threshold: 99
+  deduplication-threshold: 100
   clustering-percentage: 90
   k_partitions: 5 # number of partitions in k-fold cross validation
 classes:
@@ -10,12 +10,12 @@ classes:
     uniprot: "cc_subcellular_location: virion NOT endolysin"
     entrez: "bacteriophage[Organism]"
 models:
-  # - name: "BLAST"
-  #   model_info:
-  #     model_name: "BLAST"
-  #     sequential: false
-  #   features:
-  #     - name: "PROTEINSEQ" # only option for blast
+  - name: "PhageScanner (BLAST) (binary-Lysins)"
+    model_info:
+      model_name: "BLAST"
+      sequential: false
+    features:
+      - name: "PROTEINSEQ" # only option for blast
   - name: "Baseline Model - Logistic Regression"
     model_info:
       model_name: "LOGREG"
@@ -25,7 +25,7 @@ models:
       - name: "ATC"
       - name: "CTD"
       - name: "PCP"
-  - name: "PhageScanner (RNN)"
+  - name: "PhageScanner (RNN) (binary-Lysins)"
     model_info:
       model_name: "RNN"
       sequential: 3
