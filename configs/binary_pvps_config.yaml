@@ -10,12 +10,6 @@ classes:
     uniprot: "capsid NOT cc_subcellular_location: virion AND reviewed: true"
     entrez: "bacteriophage[Organism] NOT (bacteriophage[Organism] AND ((shaft[Title] OR sheath[Title]) AND tail[Title]) OR head-tail[Title] OR tail fiber[Title] OR portal[Title] OR minor tail[Title] OR major tail[Title] OR baseplate[Title] OR minor capsid[Title] OR major capsid[Title]))"
 models:
-  - name: "PhageScanner_BLAST_binary_PVP"
-    model_info:
-      model_name: "BLAST"
-      sequential: false
-    features:
-      - name: "PROTEINSEQ" # only option for blast
   - name: "iVIREONS_FFNN_binary_PVP"
     model_info:
       model_name: "FFNN"
@@ -23,32 +17,29 @@ models:
     features:
       - name: "AAC"
       - name: "ISO"
-  - name: "Feng_NaiveBayes_binary_PVP"
+  - name: "Feng2013_NaiveBayes_binary_PVP"
     model_info:
       model_name: "MULTINAIVEBAYES"
       sequential: false
-    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-      - name: "AAC"
-      - name: "DPC"
-        parameters:
-          gap_size: 0
+    features:
+      - name: "PSEUDOAAC"
   - name: "PVP-SVM_SVM_binary_PVP"
     model_info:
       model_name: "SVM"
       sequential: false
-    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-      - name: "DPC"
-        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-          gap_size: 0
+    features:
       - name: "AAC"
       - name: "ATC"
       - name: "CTD"
+      - name: "DPC"
+        parameters:
+          gap_size: 0
       - name: "PCP"
   - name: "SCORPION-partial_RF_binary_PVP"
     model_info:
       model_name: "RANDOMFOREST"
       sequential: false
-    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+    features:
       - name: "AAC"
       - name: "CTD"
       - name: "DPC"
@@ -67,13 +58,19 @@ models:
     model_info:
       model_name: "RNN"
       sequential: 3
-    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+    features:
       - name: "DPC"
-        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
+        parameters:
           gap_size: 0
   - name: "DeePVP_CNN_binary_PVP"
     model_info:
       model_name: "CNN"
       sequential: false
-    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+    features:
       - name: "SEQUENTIALONEHOT"
+  - name: "PhageScanner_BLAST_binary_PVP"
+    model_info:
+      model_name: "BLAST"
+      sequential: false
+    features:
+      - name: "PROTEINSEQ" # only option for blast

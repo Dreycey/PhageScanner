@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from typing import Dict, Union, Iterator, Optional, Tuple, Any
 import gc
+from enum import Enum
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,12 @@ from PhageScanner.main.exceptions import IncorrectValueError
 from PhageScanner.main.feature_extractors import ProteinFeatureExtraction, extract_feature_vector
 from PhageScanner.main.models import ModelNames
 from PhageScanner.main.pipelines.pipeline_interface import Pipeline
+
+
+class DataframeColumns(str, Enum):
+    CLASS_LABEL = "class"
+    PARTITION_LABEL = "partition"
+    PROTEIN_SEQ = "protein"
 
 
 class TrainingPipeline(Pipeline):
@@ -69,33 +76,30 @@ class TrainingPipeline(Pipeline):
     def create_combined_df(class2filepath, class2index):
         """Create a Pandas dataframe from the combined partitions for different classes CSVs."""
         dataframes = []
-        
+
         for class_name, class_path in class2filepath.items():
             logging.debug(f"Combining class {class_name} into the dataframe.")
             df_tmp = pd.read_csv(class_path)
-            df_tmp["class"] = class2index[class_name]
+            df_tmp[DataframeColumns.CLASS_LABEL] = class2index[class_name]
             dataframes.append(df_tmp)
 
-        # Concatenate all dataframes at once
-        combined_dataframe = pd.concat(dataframes, ignore_index=True)
-        
-        return combined_dataframe
+        return pd.concat(dataframes, ignore_index=True)
 
     @staticmethod
-    def hybrid_sample_partitions(df, percentile: float = 50, interpolation: str = 'linear') -> pd.DataFrame:
+    def hybrid_sample_partitions(df: pd.DataFrame, percentile: float = 50, interpolation: str = 'linear') -> pd.DataFrame:
         """
-           Balance classes within each partition by upsampling smaller classes 
-           and downsampling larger classes based on an interpolated percentile.
+        Balance classes within each partition by upsampling smaller classes and 
+        downsampling larger classes based on an interpolated percentile.
         """
         balanced_partitions = []
 
-        for partition, partition_df in df.groupby("partition"):
-            class_sizes = partition_df["class"].value_counts()
+        for _, partition_df in df.groupby(DataframeColumns.PARTITION_LABEL):
+            class_sizes = partition_df[DataframeColumns.CLASS_LABEL].value_counts()
             percentile_class_size = int(np.percentile(class_sizes, percentile, interpolation=interpolation))
 
             balanced_classes = []
-            for _, class_df in partition_df.groupby("class"):
-                if len(class_df) > percentile_class_size:
+            for _, class_df in partition_df.groupby(DataframeColumns.CLASS_LABEL):
+                if class_df.count() > percentile_class_size:
                     sampled_df = class_df.sample(n=percentile_class_size, random_state=1)
                 else:
                     sampled_df = class_df.sample(n=percentile_class_size, replace=True, random_state=1)
@@ -149,20 +153,18 @@ class TrainingPipeline(Pipeline):
         """
         unique_partitions = df["partition"].unique()
         for test_partition in unique_partitions:
-            test_df = df[df["partition"] == test_partition]
             train_df = df[df["partition"] != test_partition]
+            test_df = df[df["partition"] == test_partition]
 
-            x_train = extract_feature_vector(train_df["protein"].to_numpy(), model_features, segment_size)
-            y_train = train_df["class"].to_numpy()
-            x_test = extract_feature_vector(test_df["protein"].to_numpy(), model_features, segment_size)
-            y_test = test_df["class"].to_numpy()
+            x_train = extract_feature_vector(train_df[DataframeColumns.PROTEIN_SEQ].to_numpy(),
+                                             model_features,
+                                             segment_size)
+            x_test = extract_feature_vector(test_df[DataframeColumns.PROTEIN_SEQ].to_numpy(),
+                                            model_features, 
+                                            segment_size)
 
-            # up and down sample
-            # sm = SMOTE(random_state=42)
-            # x_train, y_train = sm.fit_resample(x_train, y_train)
-            
-            smote_enn = SMOTEENN(random_state=0)
-            x_train, y_train = smote_enn.fit_resample(x_train, y_train)
+            y_train = train_df[DataframeColumns.CLASS_LABEL].to_numpy()
+            y_test = test_df[DataframeColumns.CLASS_LABEL].to_numpy()
 
             yield x_train, y_train, x_test, y_test
 
@@ -257,7 +259,7 @@ class TrainingPipeline(Pipeline):
 
         # Step 3: Balance the classes with different partitions.
         logging.info("Step 3 - Balancing classes in each partition...")
-        #combined_dataframe = TrainingPipeline.hybrid_sample_partitions(combined_dataframe, percentile=70)
+        combined_dataframe = TrainingPipeline.hybrid_sample_partitions(combined_dataframe, percentile=70)
         logging.info("Step 3 (Finished) - Balancing classes in each partition...")
 
         # Step 4: Extract features and train.
