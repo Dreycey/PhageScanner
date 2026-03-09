@@ -5,3 +5,4 @@ logs/ linguist-vendored
 
 # Ignore generated reports
 misc/ linguist-vendored
+*.ipynb linguist-vendored
