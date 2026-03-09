@@ -5,4 +5,7 @@ logs/ linguist-vendored
 
 # Ignore generated reports
 misc/ linguist-vendored
+
+# misc files that should be ignored here.
 *.ipynb linguist-vendored
+*.html
