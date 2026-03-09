@@ -8,4 +8,4 @@ misc/ linguist-vendored
 
 # misc files that should be ignored here.
 *.ipynb linguist-vendored
-*.html
+*.html linguist-vendored
