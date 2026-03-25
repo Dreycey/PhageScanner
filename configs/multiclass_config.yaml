@@ -1,67 +1,43 @@
 clustering:
-  clustering-percentage: 90
-  k_partitions: 5 # number of partitions in k-fold cross validation
   deduplication-threshold: 100
+  clustering-percentage: 90
+  k_partitions: 10 # number of partitions in k-fold cross validation
 classes:
   - name: MajorCapsid
     uniprot: "major capsid AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "major capsid[Title]"
+    entrez: "major capsid[Title]"
   - name: MinorCapsid
     uniprot: "minor capsid AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "minor capsid[Title]"
+    entrez: "minor capsid[Title]"
   - name: Baseplate
     uniprot: "baseplate AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "baseplate[Title]"
+    entrez: "baseplate[Title]"
   - name: MajorTail
     uniprot: "major tail AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "major tail[Title]"
+    entrez: "major tail[Title]"
   - name: MinorTail
     uniprot: "minor tail AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "minor tail[Title]"
+    entrez: "minor tail[Title]"
   - name: Portal
     uniprot: "portal AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "portal[Title]"
+    entrez: "portal[Title]"
   - name: TailFiber
     uniprot: "tail fiber AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "tail fiber[Title]"
+    entrez: "tail fiber[Title]"
   - name: Collar
     uniprot: "collar AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "collar[Title]"
-  - name: shaft
+    entrez: "collar[Title]"
+  - name: Shaft
     uniprot: "(shaft OR sheath) AND tail AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "(shaft[Title] OR sheath[Title]) AND tail[Title]"
+    entrez: "(shaft[Title] OR sheath[Title]) AND tail[Title]"
   - name: HTJ
     uniprot: "head-tail AND cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "head-tail[Title]"
+    entrez: "head-tail[Title]"
   - name: non-PVP
     uniprot: "capsid NOT cc_subcellular_location: virion AND reviewed: true"
-    # entrez: "bacteriophage[Organism] NOT ((shaft[Title] OR sheath[Title]) AND tail[Title]) OR head-tail[Title] OR tail fiber[Title] OR portal[Title] OR minor tail[Title] OR major tail[Title] OR baseplate[Title] OR minor capsid[Title] OR major capsid[Title])"
+    entrez: "bacteriophage[Organism] NOT (((shaft[Title] OR sheath[Title]) AND tail[Title]) OR head-tail[Title] OR tail fiber[Title] OR portal[Title] OR minor tail[Title] OR major tail[Title] OR baseplate[Title] OR minor capsid[Title] OR major capsid[Title])"
 models:
-  # - name: "BLAST"
-  #   model_info:
-  #     model_name: "BLAST"
-  #     sequential: false
-  #   feature_selection: false # Options:
-  #   features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-  #     - name: "PROTEINSEQ"
-  - name: "PhANNs (FFNN)"
-    model_info:
-      model_name: "FFNN"
-      sequential: false
-    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-      - name: "DPC"
-        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-          gap_size: 0
-      - name: "DPC"
-        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-          gap_size: 2
-  - name: "DeePVP (CNN)"
-    model_info:
-      model_name: "CNN"
-      sequential: false
-    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
-      - name: "SEQUENTIALONEHOT"
-  - name: "Baseline Model - Logistic Regression"
+  - name: "PhageScanner_LogisticRegression_multiclass_PVP"
     model_info:
       model_name: "LOGREG"
       sequential: false
@@ -69,16 +45,13 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 0
-  - name: "PhageScanner (HashSeq-FFNN)"
+  - name: "DeePVP_CNN_multiclass_PVP"
     model_info:
-      model_name: "FFNN"
+      model_name: "CNN"
       sequential: false
-    features: 
-      - name: "HASH_SEQ"
-        parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
-          vec_size: 1000
-          kmer_size: 10
-  - name: "PhageScanner (RNN)"
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "SEQUENTIALONEHOT"
+  - name: "PhageScanner_RNN_multiclass_PVP"
     model_info:
       model_name: "RNN"
       sequential: 2
@@ -87,3 +60,28 @@ models:
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 0
       - name: "TPC"
+  - name: "PhageScanner_BLAST_multiclass_PVP"
+    model_info:
+      model_name: "BLAST"
+      sequential: false
+    feature_selection: false # Options:
+    features: # Options: "AAC", "DPC", "ISO", "PSEUDOAAC", "ATC", "CTD"
+      - name: "PROTEINSEQ"
+  - name: "PhANNs_FFNN_multiclass_PVP"
+    model_info:
+      model_name: "FFNN"
+      sequential: false
+    features:
+      - name: "DPC"
+        parameters:
+          gap_size: 0
+      - name: "TPC"
+        parameters:
+          gap_size: 0
+      - name: "ISO"
+  # - name: "PhageScanner_RNN"
+  #   model_info:
+  #     model_name: "RNN2"
+  #     sequential: false
+  #   features: # Options: "AAC", "DPC", "ISO",
+  #     - name: "INTEGERENCODING"

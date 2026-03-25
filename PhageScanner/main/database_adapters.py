@@ -13,7 +13,7 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List
+from typing import Generator, Any
 
 import requests
 from bs4 import BeautifulSoup
@@ -223,7 +223,7 @@ class EntrezAdapter(DatabaseAdapter):
         modified_query += extra
         return modified_query
 
-    def esearch(self, query, batch_size=10000) -> List[str]:
+    def esearch(self, query, batch_size=10000) -> Generator[Any, Any, Any]:
         """Return a list of URIs.
 
         Description:

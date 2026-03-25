@@ -70,10 +70,7 @@ There are three fundamental pipelines in the PhageScanner tool. Each of these pi
     ```
     - Example using Docker (multiclass pvps)
     ```
-    docker run --rm \
-        -v "$(pwd)/configs:/app/configs" \
-        -v "$(pwd)/multiclass_database:/app/multiclass_database" \
-        dreyceyalbin/phagescanner database -c /app/configs/multiclass_config.yaml -o /app/multiclass_database/ -v info
+    docker run --rm -v "$(pwd)/configs:/app/configs" -v "$(pwd)/multiclass_database:/app/multiclass_database" dreyceyalbin/phagescanner database -c /app/configs/multiclass_config.yaml -o /app/multiclass_database/ -v info
     ```
 2. Training and Test ML models
     - Basic usage
@@ -86,31 +83,24 @@ There are three fundamental pipelines in the PhageScanner tool. Each of these pi
     ```
     - Example using Docker (multiclass pvps)
     ```
-    docker run --rm \
-        -v "$(pwd)/configs:/app/configs" \
-        -v "$(pwd)/multiclass_database:/app/multiclass_database" \
-        -v "$(pwd)/training_output:/app/training_output" \
-        dreyceyalbin/phagescanner train -c /app/configs/multiclass_config.yaml -o /app/training_output --database_csv_path /app/multiclass_database/ -v debug
+    docker run --rm -v "$(pwd)/configs:/app/configs" -v "$(pwd)/multiclass_database:/app/multiclass_database" -v "$(pwd)/training_output:/app/training_output" dreyceyalbin/phagescanner train -c /app/configs/multiclass_config.yaml -o /app/training_output --database_csv_path /app/multiclass_database/ -v debug
     ```
 3. Run on metagenomic data, genomes or proteins
     - Basic usage
     ```
     python phagescanner.py predict [-h] -i INPUT -t TYPE ("reads", "genome", or "protein") -c CONFIG -o training_output -n NAME -tdir TRAINING_OUTPUT
-                                [--megahit_path MEGAHIT_PATH (Default: 'megahit')] [--phanotate_path PHANOTATE_PATH (Default: 'phanotate.py')]
-                                [--probability_threshold PROBABILITY_THRESHOLD] [-v VERBOSITY]
+                                   [--megahit_path MEGAHIT_PATH (Default: 'megahit')]
+                                   [--phanotate_path PHANOTATE_PATH (Default: 'phanotate.py')]
+                                   [--probability_threshold PROBABILITY_THRESHOLD] 
+                                   [-v VERBOSITY]
     ```
     - Example (genomes; though sequencing reads and proteins can be used as input)
     ```
-    python phagescanner.py predict -t "genomes" -c configs/multiclass_config.yaml -n "OUTPREFIX" -tdir .\training_output\ -o prediction_output -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
+    python phagescanner.py predict -t genome -c configs/multiclass_config.yaml -n "OUTPREFIX" -tdir .\training_output\ -o prediction_output -i examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
     ```
     - Example using Docker (genomes)
     ```
-    docker run --rm \
-        -v "$(pwd)/configs:/app/configs" \
-        -v "$(pwd)/examples:/app/examples" \
-        -v "$(pwd)/prediction_output:/app/prediction_output" \
-        -v "$(pwd)/training_output:/app/training_output" \
-        dreyceyalbin/phagescanner predict -t "genome" -c /app/configs/multiclass_config.yaml -o /app/prediction_output -n "OUTPREFIX" -tdir .\training_output\ -i /app/examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
+    docker run --rm -v "$(pwd)/configs:/app/configs" -v "$(pwd)/examples:/app/examples" -v "$(pwd)/prediction_output:/app/prediction_output" -v "$(pwd)/training_output:/app/training_output" dreyceyalbin/phagescanner predict -t genome -c /app/configs/multiclass_config.yaml -o /app/prediction_output -n "OUTPREFIX" -tdir .\training_output\ -i /app/examples/GCF_000912975.1_ViralProj227117_genomic.fna -v debug
     ```
 
 # PhageScanner GUI

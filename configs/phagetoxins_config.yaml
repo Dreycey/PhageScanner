@@ -1,6 +1,6 @@
 clustering:
   deduplication-threshold: 100
-  clustering-percentage: 95
+  clustering-percentage: 90
   k_partitions: 5 # number of partitions in k-fold cross validation
 classes:
   - name: KnownToxin
@@ -8,13 +8,13 @@ classes:
   - name: Non-Toxin
     uniprot: 'bacteriophage NOT (go:0090729) AND reviewed: true'
 models:
-  - name: "BLAST"
+  - name: "PhageScanner_BLAST_binary_toxins"
     model_info:
       model_name: "BLAST"
       sequential: false
     features:
       - name: "PROTEINSEQ" # only option for blast
-  - name: "PVP-SVM (SVM)"
+  - name: "PVP-SVM_SVM_binary_toxins"
     model_info:
       model_name: "SVM"
       sequential: false
@@ -26,7 +26,7 @@ models:
       - name: "ATC"
       - name: "CTD"
       - name: "PCP"
-  - name: "ToxinFinder (FFNN)"
+  - name: "PhageScanner_FFNN_binary_toxins"
     model_info:
       model_name: "FFNN"
       sequential: false
@@ -37,7 +37,7 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 2
-  - name: "ToxinFinder (RNN)"
+  - name: "PhageScanner_RNN_binary_toxins"
     model_info:
       model_name: "RNN"
       sequential: 3
@@ -45,7 +45,7 @@ models:
       - name: "DPC"
         parameters: # DPC must have 'gap_size' parameter. 0 for regular DPC
           gap_size: 0
-  - name: "Baseline Model - Logistic Regression"
+  - name: "PhageScanner_LogisticRegression_binary_toxins"
     model_info:
       model_name: "LOGREG"
       sequential: false
